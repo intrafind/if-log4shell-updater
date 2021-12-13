@@ -90,6 +90,11 @@ public class Log4shellUpdateTest {
     assertThat(tempDir.resolve("service/subNew/log4j-core-2.15.0.jar"), exists());
     assertThat(tempDir.resolve("service/subNewer/log4j-core-2.16.0.jar"), exists());
     assertThat(tempDir.resolve("service/subNewer/log4j-core-2.15.0.jar"), not(exists()));
+
+    Log4shellUpdate.main(new String[]{"-p", tempDir.resolve("service").toString(), "-b"});
+    assertThat(tempDir.resolve("service/log4j-core-2.11.0.jar.bak"), not(exists()));
+    assertThat(tempDir.resolve("service/subOld/log4j-core-2.11.0.jar.bak"), not(exists()));
+
   }
 
   @SuppressWarnings("ConstantConditions")

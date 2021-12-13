@@ -139,6 +139,7 @@ public class Log4shellUpdate {
       final File exportFile = exportPath.toFile();
       if (exportFile.exists()) {
         System.out.println("Replacement " + exportPath + " already exists. Nothing to do.");
+        return;
       }
       Files.createFile(exportPath);
       targetFile = new FileOutputStream(exportFile);
