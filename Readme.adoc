@@ -1,0 +1,20 @@
+== Log4shellUpdater
+
+This is a tool to replace all iFinder-relevant log4j2 jars with their respective 2.15.0 versions to fix CVE-2021-44228.
+
+=== Usage
+
+To display help:
+
+`java -jar if-log4shell-updater-1.0.0-jar-with-dependencies.jar -h`
+
+
+To do a dry run:
+`java -jar if-log4shell-updater-1.0.0-jar-with-dependencies.jar -p <path-to-service> -d`
+
+
+To execute:
+`java -jar if-log4shell-updater-1.0.0-jar-with-dependencies.jar -p <path-to-service>`
+
+
+
