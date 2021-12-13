@@ -6,6 +6,19 @@
   <artifactId>if-log4shell-updater</artifactId>
   <version>1.0.0-SNAPSHOT</version>
 
+  <distributionManagement>
+    <repository>
+      <id>internal-intrafind-repository-releases</id>
+      <name>maven repository manager running on nexus</name>
+      <url>https://nexus.intrafind.net/repository/releases/</url>
+    </repository>
+    <snapshotRepository>
+      <id>internal-intrafind-repository-snapshots</id>
+      <name>maven repository manager running on nexus</name>
+      <url>https://nexus.intrafind.net/repository/snapshots/</url>
+    </snapshotRepository>
+  </distributionManagement>
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
