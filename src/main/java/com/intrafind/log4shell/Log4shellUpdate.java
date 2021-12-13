@@ -17,62 +17,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Log4shellUpdate {
 
   private static final Pattern VERSION_PATTERN = Pattern.compile("-2\\.(\\d+)\\.\\d+\\.jar");
-  private static Map<String, String> replacements;
+  private static final Map<String, String> replacements;
 
   static {
-    try {
-      initReplacementMap();
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
-    }
-  }
-  static final Map<Path, String> TO_REPLACE = new HashMap<>();
-
-  public static void main(String[] args) throws IOException {
-    CommandLine cmd = parseCmd(args);
-    String path = cmd.getOptionValue("path");
-
-    Files.walk(Paths.get(path))
-        .forEach(Log4shellUpdate::addToReplaceIfOldLog4j);
-    if (cmd.hasOption("dry-run")) {
-      TO_REPLACE.forEach((oldFile, replacement) -> System.out.println("Would replace " + oldFile + " with " + replacement));
-    } else {
-      TO_REPLACE.forEach((oldFile, replacement) -> {
-        try {
-          Files.delete(oldFile);
-        } catch (IOException e) {
-          System.err.println("Could not delete " + path + "! Make sure you have write permissions and the file is not in use. Then restart the utility.");
-          throw new IllegalStateException(e);
-        }
-        final Path pathReplacement = oldFile.getParent().resolve(replacement);
-        exportResource(replacement, pathReplacement);
-        System.out.println("Replaced " + oldFile + " with " + replacement);
-      });
-    }
-  }
-
-
-  private static Optional<String> getReplacementIfOld(Path path) {
-    final Matcher matcher = VERSION_PATTERN.matcher(path.getFileName().toString());
-    if (matcher.find()) {
-      if (Integer.parseInt(matcher.group(1)) < 15) {
-        return replacements.entrySet().stream()
-            .filter(entry -> path.getFileName().toString().startsWith(entry.getKey()))
-            .map(Map.Entry::getValue)
-            .findFirst();
-      }
-    }
-      return Optional.empty();
-  }
-
-  private static void initReplacementMap() throws IOException {
     replacements = new HashMap<>();
     replacements.put("log4j-1.2-api-", "log4j-1.2-api-2.15.0.jar");
     replacements.put("log4j-api-", "log4j-api-2.15.0.jar");
@@ -82,21 +35,19 @@ public class Log4shellUpdate {
     replacements.put("log4j-slf4j-impl-", "log4j-slf4j-impl-2.15.0.jar");
   }
 
+  public static void main(String[] args) throws IOException {
+    CommandLine cmd = parseCmd(args);
+    String pathOption = cmd.getOptionValue("path");
 
-  private static void addToReplaceIfOldLog4j(Path path) {
-    if (path.toFile().isDirectory()) {
-      return;
+    final Map<Path, String> toReplace = new HashMap<>();
+    Files.walk(Paths.get(pathOption))
+        .forEach(path -> Log4shellUpdate.addToReplaceIfOldLog4j(path, toReplace));
+    if (cmd.hasOption("dry-run")) {
+      toReplace.forEach((oldFile, replacement) -> System.out.println("Would replace " + oldFile + " with " + replacement));
+    } else {
+      toReplace.forEach(Log4shellUpdate::replace);
     }
-
-    Optional<String> replacement = getReplacementIfOld(path);
-    if (!replacement.isPresent()) {
-      return;
-    }
-
-    final String replacementResource = replacement.get();
-    TO_REPLACE.put(path, replacementResource);
   }
-
 
   private static CommandLine parseCmd(String[] args) {
     Options options = new Options();
@@ -105,28 +56,53 @@ public class Log4shellUpdate {
     options.addOption("h", "help", false, "print this help");
     CommandLineParser parser = new DefaultParser();
 
-    CommandLine cmd;
     try {
-      cmd = parser.parse(options, args);
+      CommandLine cmd = parser.parse(options, args);
       if (cmd.hasOption("help")) {
         new HelpFormatter().printHelp("if-log4shell-updater", options);
         System.exit(0);
       }
+      return cmd;
     } catch (ParseException e) {
       System.err.println(e.getMessage());
       new HelpFormatter().printHelp("if-log4shell-updater", options);
       System.exit(1);
       return null;
     }
-    return cmd;
   }
 
+  private static void addToReplaceIfOldLog4j(Path path, Map<Path, String> toReplace) {
+    if (!path.toFile().isDirectory()) {
+      final Matcher matcher = VERSION_PATTERN.matcher(path.getFileName().toString());
+      if (matcher.find()) {
+        if (Integer.parseInt(matcher.group(1)) < 15) {
+          replacements.entrySet().stream()
+              .filter(entry -> path.getFileName().toString().startsWith(entry.getKey()))
+              .map(Map.Entry::getValue)
+              .findFirst()
+              .ifPresent(replacementResource -> toReplace.put(path, replacementResource));
+        }
+      }
+    }
+  }
+
+  private static void replace(Path oldFile, String replacement) {
+    try {
+      Files.delete(oldFile);
+    } catch (IOException e) {
+      System.err.println("Could not delete " + oldFile + "! Make sure you have write permissions and the file is not in use. Then restart the utility.");
+      System.exit(1);
+    }
+    final Path pathReplacement = oldFile.getParent().resolve(replacement);
+    exportResource(replacement, pathReplacement);
+    System.out.println("Replaced " + oldFile + " with " + replacement);
+  }
 
   private static void exportResource(String resourceName, Path exportPath) {
     try {
-      OutputStream resStreamOut = null;
-      try (InputStream stream = Log4shellUpdate.class.getResourceAsStream("/" + resourceName)) {
-        if (stream == null) {
+      OutputStream targetFile = null;
+      try (InputStream resourceStream = Log4shellUpdate.class.getResourceAsStream("/" + resourceName)) {
+        if (resourceStream == null) {
           throw new IllegalStateException("Cannot get resource \"" + resourceName + "\" from Jar file.");
         }
 
@@ -137,13 +113,13 @@ public class Log4shellUpdate {
           System.out.println("Replacement " + exportPath + " already exists. Nothing to do.");
         }
         Files.createFile(exportPath);
-        resStreamOut = new FileOutputStream(exportFile);
-        while ((readBytes = stream.read(buffer)) > 0) {
-          resStreamOut.write(buffer, 0, readBytes);
+        targetFile = new FileOutputStream(exportFile);
+        while ((readBytes = resourceStream.read(buffer)) > 0) {
+          targetFile.write(buffer, 0, readBytes);
         }
       } finally {
-        if (resStreamOut != null) {
-          resStreamOut.close();
+        if (targetFile != null) {
+          targetFile.close();
         }
       }
     } catch (IOException e) {

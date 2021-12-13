@@ -61,7 +61,6 @@ public class Log4shellUpdateTest {
   public void testDryRun() throws IOException {
     Log4shellUpdate.main(new String[]{"-p", tempDir.resolve("service").toString(), "-d"});
 
-    assertThat(Log4shellUpdate.TO_REPLACE.size(), is(equalTo(12)));
     assertThat(tempDir.resolve("service").toFile().list().length, is(equalTo(10)));
     assertThat(tempDir.resolve("log4j-core-2.11.0.jar"), exists());
     assertThat(tempDir.resolve("log4j-core-2.15.0.jar"), not(exists()));
@@ -79,7 +78,6 @@ public class Log4shellUpdateTest {
   public void test() throws IOException {
     Log4shellUpdate.main(new String[]{"-p", tempDir.resolve("service").toString()});
 
-    assertThat(Log4shellUpdate.TO_REPLACE.size(), is(equalTo(12)));
     assertThat(tempDir.resolve("service").toFile().list().length, is(equalTo(10)));
     assertThat(tempDir.resolve("log4j-core-2.11.0.jar"), exists());
     assertThat(tempDir.resolve("log4j-core-2.15.0.jar"), not(exists()));
@@ -94,7 +92,6 @@ public class Log4shellUpdateTest {
 
   @After
   public void after() throws IOException {
-    Log4shellUpdate.TO_REPLACE.clear();
     Files.walkFileTree(tempDir, new SimpleFileVisitor<Path>() {
       @Override
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
