@@ -78,13 +78,34 @@ public class Log4shellUpdateTest {
   public void test() throws IOException {
     Log4shellUpdate.main(new String[]{"-p", tempDir.resolve("service").toString()});
 
+    assertThat(tempDir.resolve("service").toFile().list().length, is(equalTo(16)));
+    assertThat(tempDir.resolve("log4j-core-2.11.0.jar"), exists());
+    assertThat(tempDir.resolve("log4j-core-2.15.0.jar"), not(exists()));
+    assertThat(tempDir.resolve("service/log4j-core-2.11.0.jar"), not(exists()));
+    assertThat(tempDir.resolve("service/log4j-core-2.15.0.jar"), exists());
+    assertThat(tempDir.resolve("service/log4j-core-2.11.0.jar.bak"), exists());
+    assertThat(tempDir.resolve("service/subOld/log4j-core-2.11.0.jar"), not(exists()));
+    assertThat(tempDir.resolve("service/subOld/log4j-core-2.15.0.jar"), exists());
+    assertThat(tempDir.resolve("service/subOld/log4j-core-2.11.0.jar.bak"), exists());
+    assertThat(tempDir.resolve("service/subNew/log4j-core-2.15.0.jar"), exists());
+    assertThat(tempDir.resolve("service/subNewer/log4j-core-2.16.0.jar"), exists());
+    assertThat(tempDir.resolve("service/subNewer/log4j-core-2.15.0.jar"), not(exists()));
+  }
+
+  @SuppressWarnings("ConstantConditions")
+  @Test
+  public void testDeleteBackups() throws IOException {
+    Log4shellUpdate.main(new String[]{"-p", tempDir.resolve("service").toString(), "-b"});
+
     assertThat(tempDir.resolve("service").toFile().list().length, is(equalTo(10)));
     assertThat(tempDir.resolve("log4j-core-2.11.0.jar"), exists());
     assertThat(tempDir.resolve("log4j-core-2.15.0.jar"), not(exists()));
     assertThat(tempDir.resolve("service/log4j-core-2.11.0.jar"), not(exists()));
     assertThat(tempDir.resolve("service/log4j-core-2.15.0.jar"), exists());
+    assertThat(tempDir.resolve("service/log4j-core-2.11.0.jar.bak"), not(exists()));
     assertThat(tempDir.resolve("service/subOld/log4j-core-2.11.0.jar"), not(exists()));
     assertThat(tempDir.resolve("service/subOld/log4j-core-2.15.0.jar"), exists());
+    assertThat(tempDir.resolve("service/subOld/log4j-core-2.11.0.jar.bak"), not(exists()));
     assertThat(tempDir.resolve("service/subNew/log4j-core-2.15.0.jar"), exists());
     assertThat(tempDir.resolve("service/subNewer/log4j-core-2.16.0.jar"), exists());
     assertThat(tempDir.resolve("service/subNewer/log4j-core-2.15.0.jar"), not(exists()));

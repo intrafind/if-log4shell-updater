@@ -17,4 +17,6 @@ To execute:
 `java -jar if-log4shell-updater-1.0.0-jar-with-dependencies.jar -p <path-to-service>`
 
 
+To delete backups automatically:
 
+`java -jar if-log4shell-updater-1.0.0-jar-with-dependencies.jar -p <path-to-service> -b`
