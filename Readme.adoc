@@ -10,13 +10,13 @@ To display help:
 
 
 To do a dry run:
-`java -jar if-log4shell-updater-1.0.0-jar-with-dependencies.jar -p <path-to-service> -d`
+`java -jar if-log4shell-updater-1.0.0-jar-with-dependencies.jar -p <path-to-install> -d`
 
 
 To execute:
-`java -jar if-log4shell-updater-1.0.0-jar-with-dependencies.jar -p <path-to-service>`
+`java -jar if-log4shell-updater-1.0.0-jar-with-dependencies.jar -p <path-to-install>`
 
 
 To delete backups automatically:
 
-`java -jar if-log4shell-updater-1.0.0-jar-with-dependencies.jar -p <path-to-service> -b`
+`java -jar if-log4shell-updater-1.0.0-jar-with-dependencies.jar -p <path-to-install> -b`
