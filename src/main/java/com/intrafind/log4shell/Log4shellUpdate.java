@@ -25,16 +25,17 @@ import java.util.regex.Pattern;
 public class Log4shellUpdate {
 
   private static final Pattern VERSION_PATTERN = Pattern.compile("-2\\.(\\d+)\\.\\d+\\.jar(\\.bak)*");
+  private static final Pattern ES_SQL_CLI_PATTERN = Pattern.compile("elasticsearch-sql-cli-\\d+\\.\\d+\\.\\d+\\.jar");
   private static final Map<String, String> replacements;
 
   static {
     replacements = new HashMap<>();
-    replacements.put("log4j-1.2-api-", "log4j-1.2-api-2.15.0.jar");
-    replacements.put("log4j-api-", "log4j-api-2.15.0.jar");
-    replacements.put("log4j-core-", "log4j-core-2.15.0.jar");
-    replacements.put("log4j-jcl-", "log4j-jcl-2.15.0.jar");
-    replacements.put("log4j-layout-template-json-", "log4j-layout-template-json-2.15.0.jar");
-    replacements.put("log4j-slf4j-impl-", "log4j-slf4j-impl-2.15.0.jar");
+    replacements.put("log4j-1.2-api-", "log4j-1.2-api-2.16.0.jar");
+    replacements.put("log4j-api-", "log4j-api-2.16.0.jar");
+    replacements.put("log4j-core-", "log4j-core-2.16.0.jar");
+    replacements.put("log4j-jcl-", "log4j-jcl-2.16.0.jar");
+    replacements.put("log4j-layout-template-json-", "log4j-layout-template-json-2.16.0.jar");
+    replacements.put("log4j-slf4j-impl-", "log4j-slf4j-impl-2.16.0.jar");
   }
 
   public static void main(String[] args) throws IOException {
@@ -42,14 +43,18 @@ public class Log4shellUpdate {
     String pathOption = cmd.getOptionValue("path");
 
     final Map<Path, String> toReplace = new HashMap<>();
+    final List<Path> toDelete = new ArrayList<>();
     Files.walk(Paths.get(pathOption))
-        .forEach(path -> Log4shellUpdate.addToReplaceIfOldLog4j(path, toReplace));
+        .forEach(path -> Log4shellUpdate.handleIfOldLog4j(path, toReplace, toDelete));
     if (cmd.hasOption("dry-run")) {
       toReplace.forEach((oldFile, replacement) -> System.out.println("Would replace " + oldFile + " with " + replacement));
+      toDelete.forEach(oldFile -> System.out.println("Would delete " + oldFile));
     } else {
-      toReplace.forEach(Log4shellUpdate::checkFilePermissions);
+      toReplace.forEach((oldFile, replacement) -> Log4shellUpdate.checkFilePermissions(oldFile));
+      toDelete.forEach(Log4shellUpdate::checkFilePermissions);
       List<Path> backups = new ArrayList<>();
       toReplace.forEach((oldPath, replacement) -> Log4shellUpdate.replace(oldPath, replacement, backups));
+      toDelete.forEach(oldPath -> Log4shellUpdate.delete(oldPath, backups));
       if (cmd.hasOption("delete-backups")) {
         deleteBackups(backups);
       }
@@ -79,22 +84,27 @@ public class Log4shellUpdate {
     }
   }
 
-  private static void addToReplaceIfOldLog4j(Path path, Map<Path, String> toReplace) {
+  private static void handleIfOldLog4j(Path path, Map<Path, String> toReplace, List<Path> toDelete) {
     if (!path.toFile().isDirectory()) {
-      final Matcher matcher = VERSION_PATTERN.matcher(path.getFileName().toString());
-      if (matcher.find()) {
-        if (Integer.parseInt(matcher.group(1)) < 15) {
-          replacements.entrySet().stream()
-              .filter(entry -> path.getFileName().toString().startsWith(entry.getKey()))
-              .map(Map.Entry::getValue)
-              .findFirst()
-              .ifPresent(replacementResource -> toReplace.put(path, replacementResource));
+      final String filename = path.getFileName().toString();
+      if (ES_SQL_CLI_PATTERN.asPredicate().test(filename)) {
+        toDelete.add(path);
+      } else {
+        final Matcher matcher = VERSION_PATTERN.matcher(filename);
+        if (matcher.find()) {
+          if (Integer.parseInt(matcher.group(1)) < 16) {
+            replacements.entrySet().stream()
+                .filter(entry -> filename.startsWith(entry.getKey()))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .ifPresent(replacementResource -> toReplace.put(path, replacementResource));
+          }
         }
       }
     }
   }
 
-  private static void checkFilePermissions(Path oldFile, String replacement) {
+  private static void checkFilePermissions(Path oldFile) {
     try {
       if (!oldFile.getParent().toFile().canWrite()) {
         System.err.println("Unable to delete " + oldFile + "! Make sure you have write permissions and the file is not in use. Then restart the utility.");
@@ -108,15 +118,7 @@ public class Log4shellUpdate {
   }
 
   private static void replace(Path oldFile, String replacement, List<Path> backups) {
-    try {
-      final Path backupPath = Paths.get(oldFile + ".bak");
-      Files.move(oldFile, backupPath);
-      backups.add(backupPath);
-    } catch (IOException e) {
-      System.err.println("Could not move " + oldFile + "! Make sure you have write permissions and the file is not in use. Restoring changes...");
-      restore(backups);
-      System.exit(1);
-    }
+    delete(oldFile, backups);
     final Path pathReplacement = oldFile.getParent().resolve(replacement);
     try {
       exportResource(replacement, pathReplacement);
@@ -125,6 +127,19 @@ public class Log4shellUpdate {
       restore(backups);
     }
     System.out.println("Replaced " + oldFile + " with " + replacement);
+  }
+
+  private static void delete(Path oldFile, List<Path> backups) {
+    try {
+      final Path backupPath = Paths.get(oldFile + ".bak");
+      Files.move(oldFile, backupPath);
+      backups.add(backupPath);
+      System.out.println("Backed up " + oldFile);
+    } catch (IOException e) {
+      System.err.println("Could not move " + oldFile + "! Make sure you have write permissions and the file is not in use. Restoring changes...");
+      restore(backups);
+      System.exit(1);
+    }
   }
 
   private static void exportResource(String resourceName, Path exportPath) throws IOException {
