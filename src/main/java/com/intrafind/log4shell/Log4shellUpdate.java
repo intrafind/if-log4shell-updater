@@ -7,6 +7,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -110,8 +111,9 @@ public class Log4shellUpdate {
         }
         if (filename.endsWith(".jar") && replacements.keySet().stream().noneMatch(filename::startsWith)) {
           try {
-            try (final InputStream fileInputStream = Files.newInputStream(path)) {
-              if (zipContainsLog4j(fileInputStream)) {
+            try (final InputStream fileInputStream = Files.newInputStream(path);
+                 final BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream)) {
+              if (zipContainsLog4j(bufferedInputStream)) {
                 fatJars.add(path);
               }
             }
