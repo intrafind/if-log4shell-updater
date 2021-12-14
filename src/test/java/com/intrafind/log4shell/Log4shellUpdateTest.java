@@ -38,6 +38,7 @@ public class Log4shellUpdateTest {
       Files.createFile(service.resolve("log4j-jcl-2.11.0.jar"));
       Files.createFile(service.resolve("log4j-layout-template-json-2.11.0.jar"));
       Files.createFile(service.resolve("log4j-slf4j-impl-2.11.0.jar"));
+      Files.createFile(service.resolve("elasticsearch-sql-cli-7.10.2.jar"));
       Files.createFile(service.resolve("log4j-1.2.17.jar"));
       final Path serviceSubOld = Files.createDirectory(service.resolve("subOld"));
       Files.createFile(serviceSubOld.resolve("log4j-1.2-api-2.11.0.jar"));
@@ -61,11 +62,12 @@ public class Log4shellUpdateTest {
   public void testDryRun() throws IOException {
     Log4shellUpdate.main(new String[]{"-p", tempDir.resolve("service").toString(), "-d"});
 
-    assertThat(tempDir.resolve("service").toFile().list().length, is(equalTo(10)));
+    assertThat(tempDir.resolve("service").toFile().list().length, is(equalTo(11)));
     assertThat(tempDir.resolve("log4j-core-2.11.0.jar"), exists());
     assertThat(tempDir.resolve("log4j-core-2.15.0.jar"), not(exists()));
     assertThat(tempDir.resolve("service/log4j-core-2.11.0.jar"), exists());
     assertThat(tempDir.resolve("service/log4j-core-2.15.0.jar"), not(exists()));
+    assertThat(tempDir.resolve("service/elasticsearch-sql-cli-7.10.2.jar"), exists());
     assertThat(tempDir.resolve("service/subOld/log4j-core-2.11.0.jar"), exists());
     assertThat(tempDir.resolve("service/subOld/log4j-core-2.15.0.jar"), not(exists()));
     assertThat(tempDir.resolve("service/subNew/log4j-core-2.15.0.jar"), exists());
@@ -78,12 +80,14 @@ public class Log4shellUpdateTest {
   public void test() throws IOException {
     Log4shellUpdate.main(new String[]{"-p", tempDir.resolve("service").toString()});
 
-    assertThat(tempDir.resolve("service").toFile().list().length, is(equalTo(16)));
+    assertThat(tempDir.resolve("service").toFile().list().length, is(equalTo(17)));
     assertThat(tempDir.resolve("log4j-core-2.11.0.jar"), exists());
     assertThat(tempDir.resolve("log4j-core-2.15.0.jar"), not(exists()));
     assertThat(tempDir.resolve("service/log4j-core-2.11.0.jar"), not(exists()));
     assertThat(tempDir.resolve("service/log4j-core-2.15.0.jar"), exists());
     assertThat(tempDir.resolve("service/log4j-core-2.11.0.jar.bak"), exists());
+    assertThat(tempDir.resolve("service/elasticsearch-sql-cli-7.10.2.jar"), not(exists()));
+    assertThat(tempDir.resolve("service/elasticsearch-sql-cli-7.10.2.jar.bak"), exists());
     assertThat(tempDir.resolve("service/subOld/log4j-core-2.11.0.jar"), not(exists()));
     assertThat(tempDir.resolve("service/subOld/log4j-core-2.15.0.jar"), exists());
     assertThat(tempDir.resolve("service/subOld/log4j-core-2.11.0.jar.bak"), exists());
@@ -92,6 +96,7 @@ public class Log4shellUpdateTest {
     assertThat(tempDir.resolve("service/subNewer/log4j-core-2.15.0.jar"), not(exists()));
 
     Log4shellUpdate.main(new String[]{"-p", tempDir.resolve("service").toString(), "-b"});
+    assertThat(tempDir.resolve("service").toFile().list().length, is(equalTo(10)));
     assertThat(tempDir.resolve("service/log4j-core-2.11.0.jar.bak"), not(exists()));
     assertThat(tempDir.resolve("service/subOld/log4j-core-2.11.0.jar.bak"), not(exists()));
 
