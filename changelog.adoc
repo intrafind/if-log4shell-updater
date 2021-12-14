@@ -1,0 +1,9 @@
+== Changelog
+
+=== 1.1.0
+* Update log4j libraries to 2.16.0
+* Delete unneeded elasticsearch-sql-cli-*.jar which includes log4j
+
+=== 1.0.0
+* Initial version
+* Replace iFinder-relevant log4j jars <2.15.0 with their respective 2.15.0 versions
