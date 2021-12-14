@@ -1,5 +1,8 @@
 == Changelog
 
+=== 1.2.0
+* Print a warning if the vulnerable class is found unexpectedly within a jar file
+
 === 1.1.0
 * Update log4j libraries to 2.16.0
 * Delete unneeded elasticsearch-sql-cli-*.jar which includes log4j
