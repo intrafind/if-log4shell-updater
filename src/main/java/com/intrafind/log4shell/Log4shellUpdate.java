@@ -7,6 +7,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -21,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class Log4shellUpdate {
 
@@ -44,8 +47,9 @@ public class Log4shellUpdate {
 
     final Map<Path, String> toReplace = new HashMap<>();
     final List<Path> toDelete = new ArrayList<>();
+    final List<Path> fatJars = new ArrayList<>();
     Files.walk(Paths.get(pathOption))
-        .forEach(path -> Log4shellUpdate.handleIfOldLog4j(path, toReplace, toDelete));
+        .forEach(path -> Log4shellUpdate.handleIfOldLog4j(path, toReplace, toDelete, fatJars));
     if (cmd.hasOption("dry-run")) {
       toReplace.forEach((oldFile, replacement) -> System.out.println("Would replace " + oldFile + " with " + replacement));
       toDelete.forEach(oldFile -> System.out.println("Would delete " + oldFile));
@@ -58,6 +62,11 @@ public class Log4shellUpdate {
       if (cmd.hasOption("delete-backups")) {
         deleteBackups(backups);
       }
+    }
+    if (!fatJars.isEmpty()) {
+      System.out.println();
+      System.out.println("WARNING!!!");
+      fatJars.forEach(jar -> System.out.println("Fat jar containing possibly vulnerable log4j detected: " + jar));
     }
   }
 
@@ -84,7 +93,7 @@ public class Log4shellUpdate {
     }
   }
 
-  private static void handleIfOldLog4j(Path path, Map<Path, String> toReplace, List<Path> toDelete) {
+  private static void handleIfOldLog4j(Path path, Map<Path, String> toReplace, List<Path> toDelete, List<Path> fatJars) {
     if (!path.toFile().isDirectory()) {
       final String filename = path.getFileName().toString();
       if (ES_SQL_CLI_PATTERN.asPredicate().test(filename)) {
@@ -98,6 +107,18 @@ public class Log4shellUpdate {
                 .map(Map.Entry::getValue)
                 .findFirst()
                 .ifPresent(replacementResource -> toReplace.put(path, replacementResource));
+          }
+        }
+        if (filename.endsWith(".jar") && replacements.keySet().stream().noneMatch(filename::startsWith)) {
+          try {
+            try (final InputStream fileInputStream = Files.newInputStream(path);
+                 final BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream)) {
+              if (zipContainsLog4j(bufferedInputStream)) {
+                fatJars.add(path);
+              }
+            }
+          } catch (IOException e) {
+            System.err.println("Could not analyze " + path + " due to " + e.getMessage());
           }
         }
       }
@@ -142,6 +163,22 @@ public class Log4shellUpdate {
     }
   }
 
+  private static boolean zipContainsLog4j(InputStream inputStream) throws IOException {
+    try (final ZipInputStream zipInputStream = new ZipInputStream(inputStream)) {
+      for (ZipEntry entry = zipInputStream.getNextEntry(); entry != null; entry = zipInputStream.getNextEntry()) {
+        if ("org/apache/logging/log4j/core/lookup/JndiLookup.class".equals(entry.getName())) {
+          return true;
+        }
+        if (entry.getName().endsWith(".jar")) {
+          if (zipContainsLog4j(zipInputStream)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   private static void exportResource(String resourceName, Path exportPath) throws IOException {
     OutputStream targetFile = null;
     try (InputStream resourceStream = Log4shellUpdate.class.getResourceAsStream("/" + resourceName)) {
@@ -184,6 +221,7 @@ public class Log4shellUpdate {
     for (Path backup : backups) {
       try {
         Files.delete(backup);
+        System.out.println("Deleted backup " + backup);
       } catch (IOException e) {
         System.err.println("Deleting backup " + backup + " failed!");
         e.printStackTrace();

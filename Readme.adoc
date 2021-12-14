@@ -22,3 +22,6 @@ To execute:
 To delete backups automatically:
 
 `java -jar if-log4shell-updater-1.1.0-jar-with-dependencies.jar -p <path-to-install> -b`
+
+
+If the tool detects jar files unexpectedly containing the vulnerable class, it will print out a warning with the path to the file. Please make sure to take appropriate measures with the file.
