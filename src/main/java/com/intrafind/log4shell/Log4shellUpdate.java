@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 public class Log4shellUpdate {
 
   private static final Pattern VERSION_PATTERN = Pattern.compile("-2\\.(\\d+)\\.\\d+\\.jar(\\.bak)*");
-  private static final Pattern ES_SQL_CLI_PATTERN = Pattern.compile("elasticsearch-sql-cli-\\d+\\.\\d+\\.\\d+.jar");
+  private static final Pattern ES_SQL_CLI_PATTERN = Pattern.compile("elasticsearch-sql-cli-\\d+\\.\\d+\\.\\d+\\.jar");
   private static final Map<String, String> replacements;
 
   static {
