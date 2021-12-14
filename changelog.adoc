@@ -1,5 +1,8 @@
 == Changelog
 
+=== 1.2.1
+* fixed a bug when analyzing jar files recursively
+
 === 1.2.0
 * Print a warning if the vulnerable class is found unexpectedly within a jar file
 
