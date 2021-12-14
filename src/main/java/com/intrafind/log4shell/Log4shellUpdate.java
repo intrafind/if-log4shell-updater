@@ -30,12 +30,12 @@ public class Log4shellUpdate {
 
   static {
     replacements = new HashMap<>();
-    replacements.put("log4j-1.2-api-", "log4j-1.2-api-2.15.0.jar");
-    replacements.put("log4j-api-", "log4j-api-2.15.0.jar");
-    replacements.put("log4j-core-", "log4j-core-2.15.0.jar");
-    replacements.put("log4j-jcl-", "log4j-jcl-2.15.0.jar");
-    replacements.put("log4j-layout-template-json-", "log4j-layout-template-json-2.15.0.jar");
-    replacements.put("log4j-slf4j-impl-", "log4j-slf4j-impl-2.15.0.jar");
+    replacements.put("log4j-1.2-api-", "log4j-1.2-api-2.16.0.jar");
+    replacements.put("log4j-api-", "log4j-api-2.16.0.jar");
+    replacements.put("log4j-core-", "log4j-core-2.16.0.jar");
+    replacements.put("log4j-jcl-", "log4j-jcl-2.16.0.jar");
+    replacements.put("log4j-layout-template-json-", "log4j-layout-template-json-2.16.0.jar");
+    replacements.put("log4j-slf4j-impl-", "log4j-slf4j-impl-2.16.0.jar");
   }
 
   public static void main(String[] args) throws IOException {
@@ -92,7 +92,7 @@ public class Log4shellUpdate {
       } else {
         final Matcher matcher = VERSION_PATTERN.matcher(filename);
         if (matcher.find()) {
-          if (Integer.parseInt(matcher.group(1)) < 15) {
+          if (Integer.parseInt(matcher.group(1)) < 16) {
             replacements.entrySet().stream()
                 .filter(entry -> filename.startsWith(entry.getKey()))
                 .map(Map.Entry::getValue)
