@@ -117,7 +117,7 @@ public class Log4shellUpdate {
                 fatJars.add(path);
               }
             }
-          } catch (IOException e) {
+          } catch (Exception e) {
             System.err.println("Could not analyze " + path + " due to " + e.getMessage());
           }
         }
@@ -132,7 +132,7 @@ public class Log4shellUpdate {
         System.exit(1);
       }
       Files.move(oldFile, oldFile);
-    } catch (IOException e) {
+    } catch (Exception e) {
       System.err.println("Unable to delete " + oldFile + "! Make sure you have write permissions and the file is not in use. Then restart the utility.");
       System.exit(1);
     }
@@ -143,7 +143,7 @@ public class Log4shellUpdate {
     final Path pathReplacement = oldFile.getParent().resolve(replacement);
     try {
       exportResource(replacement, pathReplacement);
-    } catch (IOException e) {
+    } catch (Exception e) {
       System.err.println("Could not write to " + pathReplacement + " restoring changes...");
       restore(backups);
     }
@@ -156,7 +156,7 @@ public class Log4shellUpdate {
       Files.move(oldFile, backupPath);
       backups.add(backupPath);
       System.out.println("Backed up " + oldFile);
-    } catch (IOException e) {
+    } catch (Exception e) {
       System.err.println("Could not move " + oldFile + "! Make sure you have write permissions and the file is not in use. Restoring changes...");
       restore(backups);
       System.exit(1);
@@ -164,15 +164,14 @@ public class Log4shellUpdate {
   }
 
   private static boolean zipContainsLog4j(InputStream inputStream) throws IOException {
-    try (final ZipInputStream zipInputStream = new ZipInputStream(inputStream)) {
-      for (ZipEntry entry = zipInputStream.getNextEntry(); entry != null; entry = zipInputStream.getNextEntry()) {
-        if ("org/apache/logging/log4j/core/lookup/JndiLookup.class".equals(entry.getName())) {
+    final ZipInputStream zipInputStream = new ZipInputStream(inputStream);
+    for (ZipEntry entry = zipInputStream.getNextEntry(); entry != null; entry = zipInputStream.getNextEntry()) {
+      if ("org/apache/logging/log4j/core/lookup/JndiLookup.class".equals(entry.getName())) {
+        return true;
+      }
+      if (entry.getName().endsWith(".jar")) {
+        if (zipContainsLog4j(zipInputStream)) {
           return true;
-        }
-        if (entry.getName().endsWith(".jar")) {
-          if (zipContainsLog4j(zipInputStream)) {
-            return true;
-          }
         }
       }
     }
@@ -210,7 +209,7 @@ public class Log4shellUpdate {
       final Path restorePath = Paths.get(backup.toString().replaceAll("(\\.bak)+$", ""));
       try {
         Files.move(backup, restorePath);
-      } catch (IOException e) {
+      } catch (Exception e) {
         System.err.println("Restoring " + backup + " failed!");
         e.printStackTrace();
       }
@@ -222,7 +221,7 @@ public class Log4shellUpdate {
       try {
         Files.delete(backup);
         System.out.println("Deleted backup " + backup);
-      } catch (IOException e) {
+      } catch (Exception e) {
         System.err.println("Deleting backup " + backup + " failed!");
         e.printStackTrace();
       }

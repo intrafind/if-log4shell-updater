@@ -58,7 +58,12 @@ public class Log4shellUpdateTest {
     final ZipOutputStream deepZipOutputStream = new ZipOutputStream(deepFatJar);
     deepZipOutputStream.putNextEntry(new ZipEntry("org/apache/logging/log4j/core/lookup/JndiLookup.class"));
     deepZipOutputStream.closeEntry();
+    deepFatJar.putNextEntry(new ZipEntry("log4j2.jar"));
+    final ZipOutputStream deepZipOutputStream2 = new ZipOutputStream(deepFatJar);
+    deepZipOutputStream2.putNextEntry(new ZipEntry("org/apache/logging/log4j/core/lookup/JndiLookup.class"));
+    deepZipOutputStream2.closeEntry();
     deepFatJar.putNextEntry(new ZipEntry("z.zzz"));
+    deepFatJar.closeEntry();
     deepFatJar.close();
     final Path serviceSubOld = Files.createDirectory(service.resolve("subOld"));
     Files.createFile(serviceSubOld.resolve("log4j-1.2-api-2.11.0.jar"));
