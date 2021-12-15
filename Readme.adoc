@@ -51,7 +51,7 @@ C:\IntraFind\jdk\bin\java -jar if-log4shell-updater-1.3.0-jar-with-dependencies.
 ----
 
 ===== Step 4:
-There may be other files in your installation that are classified as questionable by your scanner. The following files can be safely be deleted:
+There may be other files in your installation that are classified as questionable by your scanner.
 
 * `hostid.jar`: This file was needed to initially create a license that matches your system. It can safely be deleted.
 
