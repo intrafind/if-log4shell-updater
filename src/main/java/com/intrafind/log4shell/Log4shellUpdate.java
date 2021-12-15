@@ -31,12 +31,13 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+@SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
 public class Log4shellUpdate {
 
   private static final Pattern VERSION_PATTERN = Pattern.compile("-2\\.(\\d+)\\.\\d+\\.jar(\\.bak_log4shell)*");
-  private static final Pattern DELETE_PATTERN = Pattern.compile("(elasticsearch-sql-cli-\\d+\\.\\d+\\.\\d+\\.jar)|(hostid\\.jar)");
+  private static final Pattern DELETE_PATTERN = Pattern.compile("elasticsearch-sql-cli-\\d+\\.\\d+\\.\\d+\\.jar");
   private static final Map<String, String> REPLACEMENTS;
-  private static final List<String> VULNERABLE_CLASSES = Arrays.asList("org/apache/logging/log4j/core/lookup/JndiLookup.class", "org/apache/log4j/net/SocketNode.class");
+  private static final List<String> VULNERABLE_CLASSES = Arrays.asList("org/apache/logging/log4j/core/lookup/JndiLookup.class");
   private static final Field ZIP_NAMES_FIELD;
 
   static {
@@ -206,7 +207,7 @@ public class Log4shellUpdate {
   private static boolean zipContainsLog4j(InputStream inputStream) throws IOException {
     final ZipInputStream zipInputStream = new ZipInputStream(inputStream);
     for (ZipEntry entry = zipInputStream.getNextEntry(); entry != null; entry = zipInputStream.getNextEntry()) {
-      if ("org/apache/logging/log4j/core/lookup/JndiLookup.class".equals(entry.getName())) {
+      if (VULNERABLE_CLASSES.contains(entry.getName())) {
         return true;
       }
       if (entry.getName().endsWith(".jar")) {
