@@ -28,28 +28,53 @@ The tool scans the specified directory including all subdirectories and reacts t
 
 === How to apply the tool step-by-step:
 
-==== Step 1:
+==== Windows:
+
+===== Step 1:
 You can download a tool to automatically replace the jars here: https://intrafind.org/log4j/.
-Save the tool to `C:\tmp` (Windows) or `/tmp/` (Linux).
+Save the tool to `C:\tmp\`.
 
 The source code, changelog and documentation can be accessed on https://github.com/intrafind/if-log4shell-updater[GitHub].
 
-==== Step 2:
+===== Step 2:
 Stop all components: services, web application (Tomcat), connectors, monitoring, OCR and all others.
 
-==== Step 3:
-Apply the tool to all installation directories on all servers. Usually, the components are installed under a common installation directory such as `C:\IntraFind\` (Windows) or `/opt/intrafind/` (Linux) - applying the tool to this directory is sufficient to update all components stored in it.
+===== Step 3:
+Apply the tool to all installation directories on all servers. Usually, the components are installed under a common installation directory such as `C:\IntraFind\` - applying the tool to this directory is sufficient to update all components stored in it.
 
-==== Windows:
 . Open a console (cmd) as administrator.
-. Change to the C:\tmp\ folder and run the tool as follows. Adjust the paths if necessary and run the tool repeatedly for multiple paths if necessary.
+. Change to the `C:\tmp\` folder and run the tool as follows. Adjust the paths if necessary and run the tool repeatedly for multiple paths if necessary.
 +
 [source]
 ----
 C:\IntraFind\jdk\bin\java -jar if-log4shell-updater-1.3.0-jar-with-dependencies.jar -p C:\IntraFind
 ----
 
+===== Step 4:
+There may be other files in your installation that are classified as questionable by your scanner. The following files can be safely be deleted:
+
+* `hostid.jar`: This file was needed to initially create a license that matches your system. It can safely be deleted.
+
+===== Step 5:
+Start all components and check if the application is working properly.
+
+===== Step 6:
+Run the tool again with an additional `-b` option to delete the backup files that were generated in the first run.
+
+[source]
+----
+C:\IntraFind\jdk\bin\java -jar if-log4shell-updater-1.3.0-jar-with-dependencies.jar -p C:\IntraFind -b
+----
+
 ==== Linux:
+
+===== Step 1:
+You can download a tool to automatically replace the jars here: https://intrafind.org/log4j/.
+Save the tool to `/tmp/`.
+
+The source code, changelog and documentation can be accessed on https://github.com/intrafind/if-log4shell-updater[GitHub].
+
+===== Step 2:
 . Open a console as the user under which the IntraFind components are run.
 . Change to the `/tmp/` folder and run the tool as follows. Adjust the paths if necessary and run the tool repeatedly for multiple paths if necessary.
 +
@@ -58,13 +83,21 @@ C:\IntraFind\jdk\bin\java -jar if-log4shell-updater-1.3.0-jar-with-dependencies.
 /opt/intrafind/jdk/bin/java -jar if-log4shell-updater-1.3.0-jar-with-dependencies.jar -p /opt/intrafind
 ----
 
-==== Step 4:
+===== Step 3:
 There may be other files in your installation that are classified as questionable by your scanner. The following files can be safely be deleted:
 
-* `hostid.jar` . This file was needed to initially create a license that matches your system. It can safely be deleted.
+* `hostid.jar`: This file was needed to initially create a license that matches your system. It can safely be deleted.
 
-==== Step 5:
-Start all components and check if the application is working properly.
+===== Step 5:
+Restart all components and check if the application is working properly.
+
+===== Step 6:
+Run the tool again with an additional `-b` option to delete the backup files that were generated in the first run.
+
+[source]
+----
+/opt/intrafind/jdk/bin/java -jar if-log4shell-updater-1.3.0-jar-with-dependencies.jar -p /opt/intrafind -b
+----
 
 == Deutsch
 
@@ -93,28 +126,56 @@ Das Tool durchsucht das angegebene Verzeichnis einschließlich aller Unterverzei
 
 === So wenden Sie das Tool Schritt für Schritt an:
 
-==== Schritt 1:
+==== Windows:
+
+===== Schritt 1:
 Sie können das Tool zum automatischen Ersetzen der jar-Dateien hier herunterladen: https://intrafind.org/log4j/.
-Speichern Sie das Programm unter "C:tmp" (Windows) oder "/tmp/" (Linux).
+Speichern Sie das Programm unter `C:\tmp\`.
 
 Der Quellcode, das Changelog und die Dokumentation können auf https://github.com/intrafind/if-log4shell-updater[GitHub] eingesehen werden.
 
-==== Schritt 2:
+===== Schritt 2:
 Stoppen Sie alle Komponenten: Dienste, Webanwendung (Tomcat), Konnektoren, Monitoring, OCR und alle anderen.
 
-==== Schritt 3:
-Wenden Sie das Tool auf alle Installationsverzeichnisse auf allen Servern an. Normalerweise werden die Komponenten in einem gemeinsamen Installationsverzeichnis installiert, z. B. `C:\IntraFind\` (Windows) oder `/opt/intrafind/` (Linux) - die Anwendung des Tools auf dieses Verzeichnis reicht aus, um alle darin gespeicherten Komponenten zu aktualisieren.
+===== Schritt 3:
+Wenden Sie das Tool auf alle Installationsverzeichnisse auf allen Servern an. Normalerweise werden die Komponenten in einem gemeinsamen Installationsverzeichnis installiert, z. B. `C:\IntraFind\` - die Anwendung des Tools auf dieses Verzeichnis reicht aus, um alle darin gespeicherten Komponenten zu aktualisieren.
 
-==== Windows:
 . Öffnen Sie eine Konsole (cmd) als Administrator.
-. Wechseln Sie zum Ordner C:\tmp\ und führen Sie das Tool wie folgt aus. Passen Sie die Pfade gegebenenfalls an und führen Sie das Werkzeug bei Bedarf wiederholt für mehrere Pfade aus.
+. Wechseln Sie zum Ordner `C:\tmp\` und führen Sie das Tool wie folgt aus. Passen Sie die Pfade gegebenenfalls an und führen Sie das Werkzeug bei Bedarf wiederholt für mehrere Pfade aus.
 +
 [source]
 ----
 C:\IntraFind\jdk\bin\java -jar if-log4shell-updater-1.3.0-jar-with-dependencies.jar -p C:\IntraFind
 ----
 
+===== Schritt 4:
+Möglicherweise befinden sich in Ihrer Installation weitere Dateien, die von Ihrem Scanner als fragwürdig eingestuft werden. Die folgenden Dateien können sicher gelöscht werden:
+
+* `hostid.jar`: Diese Datei wurde benötigt, um anfangs eine Lizenz zu erstellen, die zu Ihrem System passt. Sie kann sicher gelöscht werden.
+
+===== Schritt 5:
+Starten Sie alle Komponenten und prüfen Sie, ob die Anwendung ordnungsgemäß funktioniert.
+
+===== Schritt 6:
+Führen Sie das Tool erneut mit einer zusätzlichen `-b` Option aus, um die im ersten Lauf generierten Backupdateien zu entfernen.
+
+[source]
+----
+C:\IntraFind\jdk\bin\java -jar if-log4shell-updater-1.3.0-jar-with-dependencies.jar -p C:\IntraFind -b
+----
+
+
 ==== Linux:
+
+===== Schritt 1:
+Sie können das Tool zum automatischen Ersetzen der jar-Dateien hier herunterladen: https://intrafind.org/log4j/.
+Speichern Sie das Programm unter `/tmp/`.
+
+Der Quellcode, das Changelog und die Dokumentation können auf https://github.com/intrafind/if-log4shell-updater[GitHub] eingesehen werden.
+
+===== Schritt 2:
+Wenden Sie das Tool auf alle Installationsverzeichnisse auf allen Servern an. Normalerweise werden die Komponenten in einem gemeinsamen Installationsverzeichnis installiert, z. B. `/opt/intrafind/` - die Anwendung des Tools auf dieses Verzeichnis reicht aus, um alle darin gespeicherten Komponenten zu aktualisieren.
+
 . Öffnen Sie eine Konsole als der Benutzer, unter dem die IntraFind-Komponenten ausgeführt werden.
 . Wechseln Sie in den Ordner `/tmp/` und führen Sie das Programm wie folgt aus. Passen Sie die Pfade gegebenenfalls an und führen Sie das Werkzeug bei Bedarf wiederholt für mehrere Pfade aus.
 +
@@ -123,10 +184,18 @@ C:\IntraFind\jdk\bin\java -jar if-log4shell-updater-1.3.0-jar-with-dependencies.
 /opt/intrafind/jdk/bin/java -jar if-log4shell-updater-1.3.0-jar-with-dependencies.jar -p /opt/intrafind
 ----
 
-==== Schritt 4:
+===== Schritt 3:
 Möglicherweise befinden sich in Ihrer Installation weitere Dateien, die von Ihrem Scanner als fragwürdig eingestuft werden. Die folgenden Dateien können sicher gelöscht werden:
 
-* `hostid.jar` . Diese Datei wurde benötigt, um anfangs eine Lizenz zu erstellen, die zu Ihrem System passt. Sie kann sicher gelöscht werden.
+* `hostid.jar`: Diese Datei wurde benötigt, um anfangs eine Lizenz zu erstellen, die zu Ihrem System passt. Sie kann sicher gelöscht werden.
 
-==== Schritt 5:
-Starten Sie alle Komponenten und prüfen Sie, ob die Anwendung ordnungsgemäß funktioniert.
+===== Schritt 4:
+Starten Sie alle Komponenten neu und prüfen Sie, ob die Anwendung ordnungsgemäß funktioniert.
+
+===== Schritt 5:
+Führen Sie das Tool erneut mit einer zusätzlichen `-b` Option aus, um die im ersten Lauf generierten Backupdateien zu entfernen.
+
+[source]
+----
+/opt/intrafind/jdk/bin/java -jar if-log4shell-updater-1.3.0-jar-with-dependencies.jar -p /opt/intrafind -b
+----
