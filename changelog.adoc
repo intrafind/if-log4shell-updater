@@ -1,5 +1,8 @@
 == Changelog
 
+=== 1.3.0
+* remove class `org.apache.logging.log4j.core.lookup.JndiLookup` from all jar files
+
 === 1.2.1
 * fixed a bug when analyzing jar files recursively
 
