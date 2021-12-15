@@ -1,0 +1,69 @@
+= Alternative Approach
+:toc:
+
+== English
+coming soon.
+
+== Deutsch
+Die Verwendung des _if-log4shell-updater_ Tools stellt aus unserer Sicht die sicherste Variante dar, um Ihre iFinder Installation kurzfristig gegen Angriffe auf die _log4shell_ Schwachstelle abzusichern.
+
+An dieser Stelle wird eine weitere weithin akzeptierte Möglichkeit dargestellt, die Schwachstelle zu entschärfen, indem die entsprechende Funktionalität in log4j über eine Java-Eigenschaft oder eine Systemumgebungsvariable deaktiviert wird (vgl. https://www.bsi.bund.de/SharedDocs/Cybersicherheitswarnungen/DE/2021/2021-549032-10F2.html?nn=520690[Informationen des BSI]).
+
+Diese Methode erfordert keine Ersetzung von Dateien und ist ebenfalls geeignet, die Schwachstelle zu neutralisieren.
+
+=== Kompatible iFinder-Versionen
+* 5.3.3, 5.3.4, 5.3.5
+* 5.4.0, 5.4.1, 5.4.2, 5.4.3, 5.4.4, 5.4.5, 5.4.6
+* 5.5.0
+
+
+=== IntraFind-Dienste und Hermes-Konnektoren
+
+Diese Komponenten verwenden ein gemeinsames Framework, was ein einheitliches Vorgehen ermöglicht. Sie können diese Behandlung für alle Dienste (`if-sv-*`) sowie alle Konnektoren des Hermes Frameworks verwenden.
+
+Fügen Sie die folgenden Zeilen am Ende Ihrer `<component_installation_dir>/conf/wrapper.conf` Datei hinzu:
+----
+#deactivate Lookups to fix the Log4Shell exploit (CVE-2021-44228)
+wrapper.java.additional.log4jlookup = -Dlog4j2.formatMsgNoLookups=true
+----
+
+Starten Sie die Komponente neu.
+
+Wenden Sie diese Behandlung auf alle Instanzen aller Komponenten an.
+
+=== if-elasticsearch
+Diese Methode funktioniert für Elasticsearch-Versionen 6.4.2.3 und später (iFinder 5.2.1.3 und später).
+
+Als letzte Zeile in `if-elasticsearch_installation_dir/config/jvm.options`, fügen Sie Folgendes hinzu:
+
+----
+#deactivate Lookups to fix the Log4Shell exploit (CVE-2021-44228)
+-Dlog4j2.formatMsgNoLookups=true
+----
+
+Starten Sie den Dienst neu und vergessen Sie nicht, den Vorgang auf allen Elasticsearch-Knoten zu wiederholen.
+
+
+=== Tomcat
+==== Windows:
+Bitte führen Sie den folgenden Befehl mit cmd im bin-Verzeichnis Ihrer Tomcat-Installation aus. z.B.:
+----
+C:\IntraFind\apache-tomcat-9.0.50\bin> tomcat9.exe //US ++JvmOptions=-Dlog4j2.formatMsgNoLookups=true
+----
+
+Starten Sie Tomcat neu.
+
+==== Linux:
+Wenn Ihr Tomcat als Dienst mit systemd läuft, fügen Sie die folgende Zeile in den Abschnitt [Service] des entsprechenden systemd-Skripts ein (in `/etc/systemd/system`):
+
+----
+Environment=LOG4J_FORMAT_MSG_NO_LOOKUPS=true
+----
+
+Wenn Ihr Tomcat als lokale Anwendung läuft, erstellen Sie eine setenv.sh Datei im bin-Verzeichnis, die den folgenden Text enthält:
+
+----
+CATALINA_OPTS=-Dlog4j2.formatMsgNoLookups=true
+----
+
+Starten Sie Tomcat neu.
