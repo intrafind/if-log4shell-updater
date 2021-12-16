@@ -256,7 +256,7 @@ public class Log4shellUpdate {
       if (allowDuplicates) {
         ((Set<String>) ZIP_NAMES_FIELD.get(zipOutputStream)).clear();
       }
-      zipOutputStream.putNextEntry(entry);
+      zipOutputStream.putNextEntry(new ZipEntry(entry.getName()));
       if (entry.getName().endsWith(".jar")) {
         copyZipWithoutVulnerableClasses(zipInputStream, zipOutputStream, allowDuplicates);
       } else {
