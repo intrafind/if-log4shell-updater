@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,6 +31,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
 public class Log4shellUpdate {
@@ -61,6 +64,7 @@ public class Log4shellUpdate {
     final Path pathOpt = Paths.get(cmd.getOptionValue("path"));
 
     final Map<Path, String> toReplace = new HashMap<>();
+    final List<Path> addedFiles = new ArrayList<>();
     final List<Path> toDelete = new ArrayList<>();
     final List<Path> fatJars = new ArrayList<>();
     Files.walk(pathOpt).forEach(path -> Log4shellUpdate.handleIfOldLog4j(path, toReplace, toDelete, fatJars));
@@ -72,13 +76,13 @@ public class Log4shellUpdate {
       toReplace.forEach((oldFile, replacement) -> Log4shellUpdate.checkFilePermissions(oldFile));
       toDelete.forEach(Log4shellUpdate::checkFilePermissions);
       List<Path> backups = new ArrayList<>();
-      toReplace.forEach((oldPath, replacement) -> Log4shellUpdate.replace(oldPath, replacement, backups));
-      toDelete.forEach(oldPath -> Log4shellUpdate.delete(oldPath, backups));
+      toReplace.forEach((oldPath, replacement) -> Log4shellUpdate.replace(oldPath, replacement, backups, addedFiles));
+      toDelete.forEach(oldPath -> Log4shellUpdate.delete(oldPath, backups, addedFiles));
       if (cmd.hasOption("allow-duplicates")) {
         ZIP_NAMES_FIELD.setAccessible(true);
-        fatJars.forEach(fatJar -> Log4shellUpdate.clean(fatJar, backups, true));
+        fatJars.forEach(fatJar -> Log4shellUpdate.clean(fatJar, backups, addedFiles, true));
       } else {
-        fatJars.forEach(fatJar -> Log4shellUpdate.clean(fatJar, backups, false));
+        fatJars.forEach(fatJar -> Log4shellUpdate.clean(fatJar, backups, addedFiles, false));
       }
       if (cmd.hasOption("delete-backups")) {
         deleteBackups(pathOpt, backups);
@@ -155,19 +159,20 @@ public class Log4shellUpdate {
     }
   }
 
-  private static void replace(Path oldFile, String replacement, List<Path> backups) {
-    delete(oldFile, backups);
+  private static void replace(Path oldFile, String replacement, List<Path> backups, List<Path> addedFiles) {
+    delete(oldFile, backups, addedFiles);
     final Path pathReplacement = oldFile.getParent().resolve(replacement);
     try {
       exportResource(replacement, pathReplacement);
+      addedFiles.add(pathReplacement);
     } catch (Exception e) {
       System.err.println("Could not write to " + pathReplacement + " restoring changes...");
-      restore(backups);
+      restore(backups, addedFiles);
     }
     System.out.println("Replaced " + oldFile + " with " + replacement);
   }
 
-  private static Path delete(Path oldFile, List<Path> backups) {
+  private static Path delete(Path oldFile, List<Path> backups, List<Path> addedFiles) {
     try {
       final Path backupPath = Paths.get(oldFile + ".bak_log4shell");
       Files.move(oldFile, backupPath);
@@ -176,14 +181,14 @@ public class Log4shellUpdate {
       return backupPath;
     } catch (Exception e) {
       System.err.println("Could not move " + oldFile + "! Make sure you have write permissions and the file is not in use. Restoring changes...");
-      restore(backups);
+      restore(backups, addedFiles);
       System.exit(1);
       return null;
     }
   }
 
-  private static void clean(Path fatJar, List<Path> backups, boolean allowDuplicates) {
-    final Path backupPath = delete(fatJar, backups);
+  private static void clean(Path fatJar, List<Path> backups, List<Path> addedFiles, boolean allowDuplicates) {
+    final Path backupPath = delete(fatJar, backups, addedFiles);
     try (final InputStream fileInputStream = Files.newInputStream(backupPath);
          final BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
          final OutputStream fileOutputStream = Files.newOutputStream(fatJar);
@@ -192,14 +197,14 @@ public class Log4shellUpdate {
     } catch (Exception e) {
       System.err.println("Could not remove vulnerable classes from " + fatJar + ". Restoring changes...");
       if (e instanceof ZipException && e.getMessage().contains("duplicate entry:")) {
-        System.err.println("Please try again with the 'allow-duplicates' option activated. This might cause warnings about illegal reflection occuring. Those may be ignored.");
+        System.err.println("Please try again with the 'allow-duplicates' option activated. This might cause warnings about illegal reflection occurring. Those may be ignored.");
       }
       try {
         Files.delete(fatJar);
       } catch (IOException ex) {
         System.err.println("Failed to delete incomplete " + fatJar);
       }
-      restore(backups);
+      restore(backups, addedFiles);
       System.exit(1);
     }
   }
@@ -245,7 +250,7 @@ public class Log4shellUpdate {
     }
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "ConstantConditions"})
   private static void copyZipWithoutVulnerableClasses(InputStream inputStream, OutputStream outputStream, boolean allowDuplicates) throws IOException, IllegalAccessException {
     final ZipInputStream zipInputStream = new ZipInputStream(inputStream);
     final ZipOutputStream zipOutputStream = new ZipOutputStream((outputStream));
@@ -256,7 +261,15 @@ public class Log4shellUpdate {
       if (allowDuplicates) {
         ((Set<String>) ZIP_NAMES_FIELD.get(zipOutputStream)).clear();
       }
-      zipOutputStream.putNextEntry(entry);
+      final ZipEntry newEntry = new ZipEntry(entry.getName());
+      Optional.ofNullable(entry.getComment()).ifPresent(newEntry::setComment);
+      Optional.ofNullable(entry.getCreationTime()).ifPresent(newEntry::setCreationTime);
+      Optional.ofNullable(entry.getExtra()).ifPresent(newEntry::setExtra);
+      Optional.ofNullable(entry.getLastAccessTime()).ifPresent(newEntry::setLastAccessTime);
+      Optional.ofNullable(entry.getLastModifiedTime()).ifPresent(newEntry::setLastModifiedTime);
+      Optional.ofNullable(entry.getMethod()).ifPresent(newEntry::setMethod);
+      Optional.ofNullable(entry.getTime()).ifPresent(newEntry::setTime);
+      zipOutputStream.putNextEntry(newEntry);
       if (entry.getName().endsWith(".jar")) {
         copyZipWithoutVulnerableClasses(zipInputStream, zipOutputStream, allowDuplicates);
       } else {
@@ -275,13 +288,21 @@ public class Log4shellUpdate {
     }
   }
 
-  private static void restore(List<Path> backups) {
+  private static void restore(List<Path> backups, List<Path> addedFiles) {
     for (Path backup : backups) {
       final Path restorePath = Paths.get(backup.toString().replaceAll("(\\.bak_log4shell)+$", ""));
       try {
-        Files.move(backup, restorePath);
+        Files.move(backup, restorePath, REPLACE_EXISTING);
       } catch (Exception e) {
         System.err.println("Restoring " + backup + " failed!");
+        e.printStackTrace();
+      }
+    }
+    for (Path addedFile : addedFiles) {
+      try {
+        Files.delete(addedFile);
+      } catch (IOException e) {
+        System.err.println("Deleting " + addedFile + " failed!");
         e.printStackTrace();
       }
     }

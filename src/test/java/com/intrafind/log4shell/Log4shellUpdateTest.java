@@ -53,19 +53,30 @@ public class Log4shellUpdateTest {
     Files.createFile(service.resolve("log4j-1.2.17.jar"));
     final ZipOutputStream fatJar = new ZipOutputStream(new FileOutputStream(service.resolve("fat-jar.jar").toString()));
     fatJar.putNextEntry(new ZipEntry("org/apache/logging/log4j/core/lookup/JndiLookup.class"));
+    fatJar.write(99);
     fatJar.closeEntry();
     fatJar.putNextEntry(new ZipEntry("z.zzz"));
+    fatJar.write(99);
     fatJar.close();
     final ZipOutputStream deepFatJar = new ZipOutputStream(new FileOutputStream(service.resolve("deep-fat-jar.jar").toString()));
     deepFatJar.putNextEntry(new ZipEntry("log4j.jar"));
     final ZipOutputStream deepZipOutputStream = new ZipOutputStream(deepFatJar);
     deepZipOutputStream.putNextEntry(new ZipEntry("org/apache/logging/log4j/core/lookup/JndiLookup.class"));
-    deepZipOutputStream.closeEntry();
+    deepZipOutputStream.write(99);
+    deepZipOutputStream.finish();
     deepFatJar.putNextEntry(new ZipEntry("log4j2.jar"));
     final ZipOutputStream deepZipOutputStream2 = new ZipOutputStream(deepFatJar);
     deepZipOutputStream2.putNextEntry(new ZipEntry("org/apache/logging/log4j/core/lookup/JndiLookup.class"));
-    deepZipOutputStream2.closeEntry();
+    deepZipOutputStream2.write(99);
+    deepZipOutputStream2.finish();
+    deepFatJar.putNextEntry(new ZipEntry("nolog4j.jar"));
+    final ZipOutputStream deepZipOutputStream3 = new ZipOutputStream(deepFatJar);
+    deepZipOutputStream3.putNextEntry(new ZipEntry("z.zzz"));
+    deepZipOutputStream3.write(99);
+    deepZipOutputStream3.closeEntry();
+    deepZipOutputStream3.finish();
     deepFatJar.putNextEntry(new ZipEntry("z.zzz"));
+    deepFatJar.write(99);
     deepFatJar.closeEntry();
     deepFatJar.close();
     final Path serviceSubOld = Files.createDirectory(service.resolve("subOld"));
@@ -123,14 +134,21 @@ public class Log4shellUpdateTest {
     assertThat(tempDir.resolve("service/subNew/log4j-core-2.16.0.jar"), exists());
     assertThat(tempDir.resolve("service/subNewer/log4j-core-2.30.0.jar"), exists());
     assertThat(tempDir.resolve("service/subNewer/log4j-core-2.16.0.jar"), not(exists()));
+    try (final ZipFile deepFatJar = new ZipFile(tempDir.resolve("service/deep-fat-jar.jar").toString());
+         final ZipFile deepFatJarBak = new ZipFile(tempDir.resolve("service/deep-fat-jar.jar.bak_log4shell").toString())) {
+      assertThat(deepFatJar.getEntry("nolog4j.jar").getCrc(), is(equalTo(deepFatJarBak.getEntry("nolog4j.jar").getCrc())));
+      assertThat(deepFatJar.getEntry("log4j.jar").getCrc(), is(not(equalTo(deepFatJarBak.getEntry("log4j.jar").getCrc()))));
+      assertThat(deepFatJar.getEntry("log4j2.jar").getCrc(), is(not(equalTo(deepFatJarBak.getEntry("log4j2.jar").getCrc()))));
+      assertThat(deepFatJar.getEntry("log4j2.jar").getTime(), is(equalTo(deepFatJarBak.getEntry("log4j2.jar").getTime())));
+    }
 
     Log4shellUpdate.main(new String[]{"-p", tempDir.resolve("service").toString(), "-b"});
     assertThat(tempDir.resolve("service").toFile().list().length, is(equalTo(12)));
     assertThat(tempDir.resolve("service/log4j-core-2.11.0.jar.bak_log4shell"), not(exists()));
     assertThat(tempDir.resolve("service/subOld/log4j-core-2.11.0.jar.bak_log4shell"), not(exists()));
-    final ZipFile fatJar = new ZipFile(tempDir.resolve("service/fat-jar.jar").toString());
-    assertThat(fatJar.stream().count(), is(equalTo(1L)));
-    fatJar.close();
+    try (final ZipFile fatJar = new ZipFile(tempDir.resolve("service/fat-jar.jar").toString())) {
+      assertThat(fatJar.stream().count(), is(equalTo(1L)));
+    }
   }
 
   @SuppressWarnings("ConstantConditions")
