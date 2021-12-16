@@ -6,7 +6,7 @@ Using the _if-log4shell-updater_ Tool is the preferred way to secure your IntraF
 
 Here we suggest an alternative widely accepted way to prevent the vulnerability, which is to disable the relevant functionality in log4j using a Java property or system environment variable (cf. https://www.bsi.bund.de/SharedDocs/Cybersicherheitswarnungen/DE/2021/2021-549032-10F2.html?nn=520690[Informations from BSI], German).
 
-This method does not require files to be replaced and is also suitable to neutralize the vulnerability.
+We recommend to use it in cases where using the if-log4shell-updater tool is not feasible: This method does not require files to be replaced and is also suitable to neutralize the vulnerability.
 
 === Compatible iFinder versions
 * 5.3.3, 5.3.4, 5.3.5
@@ -73,7 +73,7 @@ Die Verwendung des _if-log4shell-updater_ Tools stellt aus unserer Sicht die sic
 
 An dieser Stelle wird eine weitere weithin akzeptierte Möglichkeit dargestellt, die Schwachstelle zu entschärfen, indem die entsprechende Funktionalität in log4j über eine Java-Eigenschaft oder eine Systemumgebungsvariable deaktiviert wird (vgl. https://www.bsi.bund.de/SharedDocs/Cybersicherheitswarnungen/DE/2021/2021-549032-10F2.html?nn=520690[Informationen des BSI]).
 
-Diese Methode erfordert keine Ersetzung von Dateien und ist ebenfalls geeignet, die Schwachstelle zu neutralisieren.
+Wir empfehlen diese Methode, wenn der Einsatz des _if-log4shell-updater_ Tools nicht möglich ist: Sie erfordert keine Ersetzung von Dateien und ist ebenfalls geeignet, die Schwachstelle zu neutralisieren.
 
 === Kompatible iFinder-Versionen
 * 5.3.3, 5.3.4, 5.3.5
