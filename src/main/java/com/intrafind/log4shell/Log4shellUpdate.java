@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -249,7 +250,7 @@ public class Log4shellUpdate {
     }
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "ConstantConditions"})
   private static void copyZipWithoutVulnerableClasses(InputStream inputStream, OutputStream outputStream, boolean allowDuplicates) throws IOException, IllegalAccessException {
     final ZipInputStream zipInputStream = new ZipInputStream(inputStream);
     final ZipOutputStream zipOutputStream = new ZipOutputStream((outputStream));
@@ -260,7 +261,15 @@ public class Log4shellUpdate {
       if (allowDuplicates) {
         ((Set<String>) ZIP_NAMES_FIELD.get(zipOutputStream)).clear();
       }
-      zipOutputStream.putNextEntry(new ZipEntry(entry.getName()));
+      final ZipEntry newEntry = new ZipEntry(entry.getName());
+      Optional.ofNullable(entry.getComment()).ifPresent(newEntry::setComment);
+      Optional.ofNullable(entry.getCreationTime()).ifPresent(newEntry::setCreationTime);
+      Optional.ofNullable(entry.getExtra()).ifPresent(newEntry::setExtra);
+      Optional.ofNullable(entry.getLastAccessTime()).ifPresent(newEntry::setLastAccessTime);
+      Optional.ofNullable(entry.getLastModifiedTime()).ifPresent(newEntry::setLastModifiedTime);
+      Optional.ofNullable(entry.getMethod()).ifPresent(newEntry::setMethod);
+      Optional.ofNullable(entry.getTime()).ifPresent(newEntry::setTime);
+      zipOutputStream.putNextEntry(newEntry);
       if (entry.getName().endsWith(".jar")) {
         copyZipWithoutVulnerableClasses(zipInputStream, zipOutputStream, allowDuplicates);
       } else {
