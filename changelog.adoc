@@ -1,18 +1,23 @@
-== Changelog
+= Changelog
 
-=== 1.3.0
+== 1.3.1
+* fixed a bug when deleting vulnerable classes from jar files
+* improved restoration in case of errors
+* improved handling of zip entries
+
+== 1.3.0
 * remove class `org.apache.logging.log4j.core.lookup.JndiLookup` from all jar files
 
-=== 1.2.1
+== 1.2.1
 * fixed a bug when analyzing jar files recursively
 
-=== 1.2.0
+== 1.2.0
 * Print a warning if the vulnerable class is found unexpectedly within a jar file
 
-=== 1.1.0
+== 1.1.0
 * Update log4j libraries to 2.16.0
 * Delete unneeded elasticsearch-sql-cli-*.jar which includes log4j
 
-=== 1.0.0
+== 1.0.0
 * Initial version
 * Replace iFinder-relevant log4j jars <2.15.0 with their respective 2.15.0 versions
