@@ -34,6 +34,11 @@ The tool scans the specified directory including all subdirectories and reacts t
 You can download a tool to automatically replace the jars here: https://intrafind.org/log4j/.
 Save the tool to `C:\tmp\`.
 
+[IMPORTANT]
+====
+Do not save the tool to the directory you want to process!
+====
+
 The source code, changelog and documentation can be accessed on https://github.com/intrafind/if-log4shell-updater[GitHub].
 
 ===== Step 2:
@@ -71,6 +76,11 @@ C:\IntraFind\jdk\bin\java -jar if-log4shell-updater-1.3.0-jar-with-dependencies.
 ===== Step 1:
 You can download a tool to automatically replace the jars here: https://intrafind.org/log4j/.
 Save the tool to `/tmp/`.
+
+[IMPORTANT]
+====
+Do not save the tool to the directory you want to process!
+====
 
 The source code, changelog and documentation can be accessed on https://github.com/intrafind/if-log4shell-updater[GitHub].
 
@@ -132,6 +142,11 @@ Das Tool durchsucht das angegebene Verzeichnis einschließlich aller Unterverzei
 Sie können das Tool zum automatischen Ersetzen der jar-Dateien hier herunterladen: https://intrafind.org/log4j/.
 Speichern Sie das Programm unter `C:\tmp\`.
 
+[IMPORTANT]
+====
+Speichern Sie das Tool nicht in dem Ordner, den Sie bereinigen wollen!
+====
+
 Der Quellcode, das Changelog und die Dokumentation können auf https://github.com/intrafind/if-log4shell-updater[GitHub] eingesehen werden.
 
 ===== Schritt 2:
@@ -170,6 +185,11 @@ C:\IntraFind\jdk\bin\java -jar if-log4shell-updater-1.3.0-jar-with-dependencies.
 ===== Schritt 1:
 Sie können das Tool zum automatischen Ersetzen der jar-Dateien hier herunterladen: https://intrafind.org/log4j/.
 Speichern Sie das Programm unter `/tmp/`.
+
+[IMPORTANT]
+====
+Speichern Sie das Tool nicht in dem Ordner, den Sie bereinigen wollen!
+====
 
 Der Quellcode, das Changelog und die Dokumentation können auf https://github.com/intrafind/if-log4shell-updater[GitHub] eingesehen werden.
 
