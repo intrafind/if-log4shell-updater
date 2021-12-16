@@ -267,7 +267,6 @@ public class Log4shellUpdate {
       Optional.ofNullable(entry.getExtra()).ifPresent(newEntry::setExtra);
       Optional.ofNullable(entry.getLastAccessTime()).ifPresent(newEntry::setLastAccessTime);
       Optional.ofNullable(entry.getLastModifiedTime()).ifPresent(newEntry::setLastModifiedTime);
-      Optional.ofNullable(entry.getMethod()).ifPresent(newEntry::setMethod);
       Optional.ofNullable(entry.getTime()).ifPresent(newEntry::setTime);
       zipOutputStream.putNextEntry(newEntry);
       if (entry.getName().endsWith(".jar")) {
