@@ -72,6 +72,8 @@ C:\IntraFind\jdk\bin\java -jar if-log4shell-updater-1.3.0-jar-with-dependencies.
 You can download a tool to automatically replace the jars here: https://intrafind.org/log4j/.
 Save the tool to `/tmp/`.
 
+If you decide to choose a different location, make sure the tool is located _outside_ of what you are going to process with that same tool.
+
 The source code, changelog and documentation can be accessed on https://github.com/intrafind/if-log4shell-updater[GitHub].
 
 ===== Step 2:
@@ -131,6 +133,8 @@ Das Tool durchsucht das angegebene Verzeichnis einschließlich aller Unterverzei
 ===== Schritt 1:
 Sie können das Tool zum automatischen Ersetzen der jar-Dateien hier herunterladen: https://intrafind.org/log4j/.
 Speichern Sie das Programm unter `C:\tmp\`.
+
+Falls Sie einen anderen Ordner verwenden wollen, sorgen Sie in jedem Fall dafür, dass das Tool _nicht_ in dem Bereich liegt, den Sie mit eben diesem Tool bearbeiten wollen - dies kann zu Problemen führen.
 
 Der Quellcode, das Changelog und die Dokumentation können auf https://github.com/intrafind/if-log4shell-updater[GitHub] eingesehen werden.
 
