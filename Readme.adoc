@@ -22,9 +22,12 @@ The tool scans the specified directory including all subdirectories and reacts t
 
 
 === Compatible iFinder versions
+* 5.2.0.3
 * 5.3.3, 5.3.4, 5.3.5
 * 5.4.0, 5.4.1, 5.4.2, 5.4.3, 5.4.4, 5.4.5, 5.4.6
 * 5.5.0
+
+If your iFinder version is not listed here, please contact the IntraFind support team.
 
 === How to apply the tool step-by-step:
 
@@ -130,9 +133,12 @@ Das Tool durchsucht das angegebene Verzeichnis einschließlich aller Unterverzei
 
 
 === Kompatible iFinder-Versionen
+* 5.2.0.3
 * 5.3.3, 5.3.4, 5.3.5
 * 5.4.0, 5.4.1, 5.4.2, 5.4.3, 5.4.4, 5.4.5, 5.4.6
 * 5.5.0
+
+Falls Sie eine andere iFinder Version betreiben, kontaktieren Sie bitte den IntraFind Support.
 
 === So wenden Sie das Tool Schritt für Schritt an:
 
