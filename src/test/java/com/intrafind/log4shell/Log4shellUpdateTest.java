@@ -217,7 +217,7 @@ public class Log4shellUpdateTest {
     assertThat(tempDir.resolve("service/lib/log4j-1.2.17.jar"), is(not(present())));
     assertThat(tempDir.resolve("service/lib/log4j-1.2-api-2.17.0.jar"), is(present()));
     assertThat(tempDir.resolve("service/lib/log4j-1.2.17.jar.bak_log4shell"), is(present()));
-    assertThat(Files.lines(tempDir.resolve("service/conf/wrapper.conf")).collect(Collectors.joining("\n")) + "\n", containsString(LOG4J2_WRAPPER_SETTINGS));
+    assertThat(Files.lines(tempDir.resolve("service/conf/wrapper.conf")).collect(Collectors.joining(System.lineSeparator())) + System.lineSeparator(), containsString(LOG4J2_WRAPPER_SETTINGS));
 
     assertThat(tempDir.resolve("app/lib/log4j-1.2.17.jar.bak_log4shell"), is(present()));
     assertThat(tempDir.resolve("app/lib/log4j-1.2.17.jar"), is(not(present())));
@@ -228,7 +228,7 @@ public class Log4shellUpdateTest {
     assertThat(tempDir.resolve("app/conf/log4j.properties.bak_log4shell"), is(present()));
     assertThat(tempDir.resolve("app/conf/log4j.properties"), is(not(present())));
     assertThat(tempDir.resolve("app/conf/log4j2.xml"), is(present()));
-    assertThat(Files.lines(tempDir.resolve("app/bat/start_app.bat")).collect(Collectors.joining("\n")), containsString(LOG4J2_CONFIGURATION));
+    assertThat(Files.lines(tempDir.resolve("app/bat/start_app.bat")).collect(Collectors.joining(System.lineSeparator())), containsString(LOG4J2_CONFIGURATION));
 
     assertThat(tempDir.resolve("iFinder5/WEB-INF/lib/log4j-1.2.17.jar.bak_log4shell"), is(present()));
     assertThat(tempDir.resolve("iFinder5/WEB-INF/lib/log4j-1.2.17.jar"), is(not(present())));

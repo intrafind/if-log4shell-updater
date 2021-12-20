@@ -55,15 +55,16 @@ public class Log4shellUpdate {
   private static final Map<String, String> REPLACEMENTS;
   private static final List<String> VULNERABLE_CLASSES = Arrays.asList("org/apache/logging/log4j/core/lookup/JndiLookup.class");
   private static final Field ZIP_NAMES_FIELD;
+  private static final String LINE_SEPARATOR = System.lineSeparator();
   static final String LOG4J2_WRAPPER_SETTINGS =
-      "\n" +
-      "#use the BasicContextSelector for Log4j2 as recommended for standalone applications\n" +
-      "#see https://logging.apache.org/log4j/2.x/manual/logsep.html\n" +
-      "wrapper.java.additional.log4jcs = -Dlog4j2.contextSelector=org.apache.logging.log4j.core.selector.BasicContextSelector\n" +
-      "#deactivate jmx registration for log4j2 loggers to avoid exceptions\n" +
-      "wrapper.java.additional.log4jmx = -Dlog4j2.disableJmx=true\n" +
-      "#log4j configuration file\n" +
-      "wrapper.java.additional.log4jfile = -Dlog4j2.configurationFile=log4j2.xml\n";
+      LINE_SEPARATOR +
+      "#use the BasicContextSelector for Log4j2 as recommended for standalone applications" + LINE_SEPARATOR +
+      "#see https://logging.apache.org/log4j/2.x/manual/logsep.html" + LINE_SEPARATOR +
+      "wrapper.java.additional.log4jcs = -Dlog4j2.contextSelector=org.apache.logging.log4j.core.selector.BasicContextSelector" + LINE_SEPARATOR +
+      "#deactivate jmx registration for log4j2 loggers to avoid exceptions" + LINE_SEPARATOR +
+      "wrapper.java.additional.log4jmx = -Dlog4j2.disableJmx=true" + LINE_SEPARATOR +
+      "#log4j configuration file" + LINE_SEPARATOR +
+      "wrapper.java.additional.log4jfile = -Dlog4j2.configurationFile=log4j2.xml" + LINE_SEPARATOR;
   static final String LOG4J1_CONFIGURATION = "-Dlog4j.((configuration)|(properties))=.*log4j.properties";
   static final String LOG4J2_CONFIGURATION = "-Dlog4j2.configurationFile=../conf/log4j2.xml";
   private static final String BACKUP_SUFFIX = ".bak_log4shell";
@@ -186,13 +187,12 @@ public class Log4shellUpdate {
     }
   }
 
-  @SuppressWarnings("ConstantConditions")
   private static void handleIfLog4j1(Path path, List<Path> toDelete, Map<Path, String> toAdd, Map<Path, String> toAppend, Map<Path, Map<String, String>> toReplaceInFile, Map<Path, String> toReplace) {
     if (LOG4J1_PATTERN.asPredicate().test(path.getFileName().toString())) {
       final Path basePath = path.getParent().getParent();
       final Path[] slf4jImpls;
       try {
-        slf4jImpls = Files.list(basePath.resolve("lib")).filter(file -> file.getFileName().toString().matches("slf4j-log4j12-.*\\.jar")).toArray(Path[]::new);
+        slf4jImpls = Files.list(basePath.resolve("lib")).filter(file -> file.getFileName().toString().matches("slf4j-log4j12-.*\\.jar")).limit(2).toArray(Path[]::new);
       } catch (IOException e) {
         System.err.println("Could not determine SLF4J implementation for " + basePath + ". Cannot replace " + path + " Exception: " + e.getMessage());
         return;
@@ -211,12 +211,21 @@ public class Log4shellUpdate {
         toDelete.add(basePath.resolve("classes/log4j.properties"));
         toAdd.put(basePath.resolve("classes/log4j2.xml"), "log4j2.xml");
       } else if (isIntrafindApp(path)) {
-        String[] startScripts = basePath.resolve(IS_WINDOWS ? "bat" : "bin").toFile().list((dir, name) -> name.startsWith("start_"));
+        Path[] startScripts;
+        try {
+          startScripts = Files.list(basePath.resolve(IS_WINDOWS ? "bat" : "bin"))
+              .filter(file -> file.getFileName().toString().startsWith("start_"))
+              .limit(2)
+              .toArray(Path[]::new);
+        } catch (IOException e) {
+          System.err.println("Could not determine start script for " + basePath + ". Cannot replace " + path + " Exception: " + e.getMessage());
+          return;
+        }
         if (startScripts.length != 1) {
           System.err.println("Could not determine start script for " + basePath + ". Cannot replace " + path);
           return;
         }
-        final Path startScriptPath = basePath.resolve((IS_WINDOWS ? "bat/" : "bin/") + startScripts[0]);
+        final Path startScriptPath = basePath.resolve((IS_WINDOWS ? "bat/" : "bin/")).resolve(startScripts[0]);
         try (InputStream startScript = Files.newInputStream(startScriptPath);
              InputStreamReader reader = new InputStreamReader(startScript);
              BufferedReader bufferedReader = new BufferedReader(reader)) {
@@ -353,7 +362,7 @@ public class Log4shellUpdate {
          final BufferedWriter bufferedWriter = new BufferedWriter(writer)) {
       bufferedReader.lines()
           .map(line -> applyReplacementsToString(line, replacements))
-          .map(line -> line + "\n")
+          .map(line -> line + LINE_SEPARATOR)
           .forEachOrdered(str -> {
             try {
               bufferedWriter.write(str);
