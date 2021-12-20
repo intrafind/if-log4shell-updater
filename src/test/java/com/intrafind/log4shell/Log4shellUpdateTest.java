@@ -178,7 +178,7 @@ public class Log4shellUpdateTest {
     assertThat(tempDir.resolve("service/sub17/log4j-core-2.17.0.jar"), exists());
   }
 
-  //@After
+  @After
   public void after() throws IOException {
     Files.walkFileTree(tempDir, new SimpleFileVisitor<Path>() {
       @Override
