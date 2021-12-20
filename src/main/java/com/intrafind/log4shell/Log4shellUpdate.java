@@ -353,6 +353,7 @@ public class Log4shellUpdate {
          final BufferedWriter bufferedWriter = new BufferedWriter(writer)) {
       bufferedReader.lines()
           .map(line -> applyReplacementsToString(line, replacements))
+          .map(line -> line + "\n")
           .forEachOrdered(str -> {
             try {
               bufferedWriter.write(str);
