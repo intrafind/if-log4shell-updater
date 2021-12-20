@@ -214,7 +214,7 @@ public class Log4shellUpdate {
         Path[] startScripts;
         try {
           startScripts = Files.list(basePath.resolve(IS_WINDOWS ? "bat" : "bin"))
-              .filter(file -> file.getFileName().toString().startsWith("start_"))
+              .filter(file -> file.getFileName().toString().startsWith("start"))
               .limit(2)
               .toArray(Path[]::new);
         } catch (IOException e) {
@@ -243,6 +243,7 @@ public class Log4shellUpdate {
         toAdd.put(basePath.resolve("conf/log4j2.xml"), "log4j2.xml");
       } else {
         System.err.println("Cannot replace " + path + " as it is not part of a known IntraFind structure.");
+        return;
       }
       toDelete.add(path);
       toAdd.put(basePath.resolve("lib/log4j-1.2-api-2.17.0.jar"), "log4j-1.2-api-2.17.0.jar");
