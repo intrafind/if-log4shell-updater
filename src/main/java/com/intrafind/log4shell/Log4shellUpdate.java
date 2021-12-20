@@ -64,7 +64,7 @@ public class Log4shellUpdate {
       "wrapper.java.additional.log4jmx = -Dlog4j2.disableJmx=true\n" +
       "#log4j configuration file\n" +
       "wrapper.java.additional.log4jfile = -Dlog4j2.configurationFile=log4j2.xml\n";
-  static final String LOG4J1_CONFIGURATION = "-Dlog4j.configuration=../conf/log4j.properties";
+  static final String LOG4J1_CONFIGURATION = "-Dlog4j.((configuration)|(properties))=.*log4j.properties";
   static final String LOG4J2_CONFIGURATION = "-Dlog4j2.configurationFile=../conf/log4j2.xml";
   private static final String BACKUP_SUFFIX = ".bak_log4shell";
 
@@ -220,7 +220,7 @@ public class Log4shellUpdate {
         try (InputStream startScript = Files.newInputStream(startScriptPath);
              InputStreamReader reader = new InputStreamReader(startScript);
              BufferedReader bufferedReader = new BufferedReader(reader)) {
-          if (bufferedReader.lines().noneMatch(line -> line.contains(LOG4J1_CONFIGURATION))) {
+          if (bufferedReader.lines().noneMatch(line -> line.matches(".*" + LOG4J1_CONFIGURATION + ".*"))) {
             System.err.println("Cannot replace " + path + " as the start script " + startScriptPath + " is not well formatted.");
             return;
           }
@@ -370,7 +370,7 @@ public class Log4shellUpdate {
   private static String applyReplacementsToString(String text, Map<String, String> replacements) {
     String resultingText = text;
     for (Map.Entry<String, String> replacement : replacements.entrySet()) {
-      resultingText = resultingText.replace(replacement.getKey(), replacement.getValue());
+      resultingText = resultingText.replaceAll(replacement.getKey(), replacement.getValue());
     }
     return resultingText;
   }
