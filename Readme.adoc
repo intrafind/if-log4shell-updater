@@ -14,7 +14,7 @@ In order to close vulnerabilities related to the _log4shell_ problem (CVE-2021-4
 === What exactly does the tool do?
 The tool scans the specified directory including all subdirectories and reacts to potential log4shell vulnerabilities as follows:
 
-* log4j2 program libraries (jar files) of version 2.15 or lower are automatically replaced by the corresponding jars in version 2.16.
+* log4j2 program libraries (jar files) of version 2.16 or lower are automatically replaced by the corresponding jars in version 2.17.
 
 * `<if-elasticsearch-install-dir>/bin/elasticsearch-sql-cli-xx.yy.zz.jar`. This file contains an embedded version of log4j-2.x. It is not needed and will be removed automatically.
 
@@ -125,7 +125,7 @@ Um Schwachstellen im Zusammenhang mit dem _log4shell_-Problem (CVE-2021-44228) z
 === Was genau macht das Tool?
 Das Tool durchsucht das angegebene Verzeichnis einschließlich aller Unterverzeichnisse und reagiert wie folgt auf potenzielle log4shell-Schwachstellen:
 
-* log4j2-Programmbibliotheken (jar-Dateien) der Version 2.15 oder niedriger werden automatisch durch die entsprechenden jars in Version 2.16 ersetzt.
+* log4j2-Programmbibliotheken (jar-Dateien) der Version 2.15 oder niedriger werden automatisch durch die entsprechenden jars in Version 2.17 ersetzt.
 
 * `<if-elasticsearch-install-dir>/bin/elasticsearch-sql-cli-xx.yy.zz.jar`. Diese Datei enthält eine eingebettete Version von log4j-2.x. Sie ist nicht erforderlich und wird automatisch entfernt.
 
