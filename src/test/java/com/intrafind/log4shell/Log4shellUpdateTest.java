@@ -35,6 +35,8 @@ public class Log4shellUpdateTest {
 
   @Before
   public void before() throws IOException {
+    Log4shellUpdate.IS_WINDOWS = true;
+
     systemOut = new ByteArrayOutputStream();
     System.setOut(new PrintStream(systemOut));
 
