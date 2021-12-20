@@ -136,7 +136,7 @@ public class Log4shellUpdate {
     options.addOption("h", "help", false, "print this help");
     options.addOption("b", "delete-backups", false, "delete backups automatically");
     options.addOption("a", "allow-duplicates", false, "allow duplicate entries in zip files (will use reflection)");
-    options.addOption("l1", "replace-log4j1", false, "replace logg4j1 with current log4j2 libraries");
+    options.addOption("l1", "replace-log4j1", false, "replace log4j1 with current log4j2 libraries (please contact Intrafind support beforehand)");
     CommandLineParser parser = new DefaultParser();
 
     try {
