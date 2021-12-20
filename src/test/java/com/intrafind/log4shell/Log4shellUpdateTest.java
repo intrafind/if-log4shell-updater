@@ -96,7 +96,7 @@ public class Log4shellUpdateTest {
     Files.createFile(serviceSubOld.resolve("log4j-layout-template-json-2.11.0.jar"));
     Files.createFile(serviceSubOld.resolve("log4j-slf4j-impl-2.11.0.jar"));
     final Path serviceSubNew = Files.createDirectory(service.resolve("subNew"));
-    Files.createFile(serviceSubNew.resolve("log4j-core-2.16.0.jar"));
+    Files.createFile(serviceSubNew.resolve("log4j-core-2.17.0.jar"));
     final Path serviceSubNewer = Files.createDirectory(service.resolve("subNewer"));
     Files.createFile(serviceSubNewer.resolve("log4j-core-2.30.0.jar"));
     final Path sub17 = Files.createDirectory(service.resolve("sub17"));
@@ -123,7 +123,7 @@ public class Log4shellUpdateTest {
   public void testDryRun() throws IOException {
     Log4shellUpdate.main(new String[]{"-p", tempDir.resolve("service").toString(), "-d"});
 
-    assertThat(tempDir.resolve("service").toFile().list().length, is(equalTo(16)));
+    assertThat(tempDir.resolve("service").toFile().list().length, is(equalTo(17)));
     assertThat(tempDir.resolve("log4j-core-2.11.0.jar"), is(present()));
     assertThat(tempDir.resolve("log4j-core-2.17.0.jar"), is(not(present())));
     assertThat(tempDir.resolve("service/log4j-core-2.11.0.jar"), is(present()));
@@ -131,8 +131,8 @@ public class Log4shellUpdateTest {
     assertThat(tempDir.resolve("service/elasticsearch-sql-cli-7.10.2.jar"), is(present()));
     assertThat(tempDir.resolve("service/subOld/log4j-core-2.11.0.jar"), is(present()));
     assertThat(tempDir.resolve("service/subOld/log4j-core-2.17.0.jar"), is(not(present())));
-    assertThat(tempDir.resolve("service/subNew/log4j-core-2.16.0.jar"), is(present()));
-    assertThat(tempDir.resolve("service/subNew/log4j-core-2.17.0.jar"), is(not(present())));
+    assertThat(tempDir.resolve("service/subNew/log4j-core-2.17.0.jar"), is(present()));
+    assertThat(tempDir.resolve("service/subNew/log4j-core-2.18.0.jar"), is(not(present())));
     assertThat(tempDir.resolve("service/subNewer/log4j-core-2.30.0.jar"), is(present()));
     assertThat(tempDir.resolve("service/subNewer/log4j-core-2.17.0.jar"), is(not(present())));
     assertThat(tempDir.resolve("service/sub17/log4j-core-2.17.0.jar"), is(present()));
@@ -185,9 +185,9 @@ public class Log4shellUpdateTest {
   public void testDeleteBackups() throws IOException {
     Log4shellUpdate.main(new String[]{"-p", tempDir.resolve("service").toString(), "-b"});
 
-    assertThat(tempDir.resolve("service").toFile().list().length, is(equalTo(15)));
+    assertThat(tempDir.resolve("service").toFile().list().length, is(equalTo(16)));
     assertThat(tempDir.resolve("log4j-core-2.11.0.jar"), is(present()));
-    assertThat(tempDir.resolve("log4j-core-2.16.0.jar"), is(not(present())));
+    assertThat(tempDir.resolve("log4j-core-2.17.0.jar"), is(not(present())));
     assertThat(tempDir.resolve("log4j-core-2.17.0.jar"), is(not(present())));
     assertThat(tempDir.resolve("service/log4j-core-2.11.0.jar"), is(not(present())));
     assertThat(tempDir.resolve("service/log4j-core-2.17.0.jar"), is(present()));
@@ -206,14 +206,14 @@ public class Log4shellUpdateTest {
   public void testLogj1() throws IOException {
     Log4shellUpdate.main(new String[]{"-p", tempDir.toString(), "-l1"});
 
-    assertThat(tempDir.resolve("service").toFile().list().length, is(equalTo(25)));
+    assertThat(tempDir.resolve("service").toFile().list().length, is(equalTo(26)));
 
     assertThat(tempDir.resolve("service/log4j.properties"), is(not(present())));
     assertThat(tempDir.resolve("service/log4j.properties.bak_log4shell"), is(present()));
     assertThat(tempDir.resolve("service/log4j2.xml"), is(present()));
     assertThat(tempDir.resolve("service/lib/log4j-1.2.17.jar.bak_log4shell"), is(present()));
     assertThat(tempDir.resolve("service/lib/log4j-1.2.17.jar"), is(not(present())));
-    assertThat(tempDir.resolve("service/lib/log4j-1.2-api-2.16.0.jar"), is(present()));
+    assertThat(tempDir.resolve("service/lib/log4j-1.2-api-2.17.0.jar"), is(present()));
     assertThat(tempDir.resolve("service/lib/log4j-1.2.17.jar.bak_log4shell"), is(present()));
     assertThat(Files.lines(tempDir.resolve("service/conf/wrapper.conf")).collect(Collectors.joining("\n")) + "\n", containsString(LOG4J2_WRAPPER_SETTINGS));
 
@@ -221,8 +221,8 @@ public class Log4shellUpdateTest {
     assertThat(tempDir.resolve("app/lib/log4j-1.2.17.jar"), is(not(present())));
     assertThat(tempDir.resolve("app/lib/slf4j-log4j12-1.7.0.jar.bak_log4shell"), is(present()));
     assertThat(tempDir.resolve("app/lib/slf4j-log4j12-1.7.0.jar"), is(not(present())));
-    assertThat(tempDir.resolve("app/lib/log4j-1.2-api-2.16.0.jar"), is(present()));
-    assertThat(tempDir.resolve("app/lib/log4j-slf4j-impl-2.16.0.jar"), is(present()));
+    assertThat(tempDir.resolve("app/lib/log4j-1.2-api-2.17.0.jar"), is(present()));
+    assertThat(tempDir.resolve("app/lib/log4j-slf4j-impl-2.17.0.jar"), is(present()));
     assertThat(tempDir.resolve("app/conf/log4j.properties.bak_log4shell"), is(present()));
     assertThat(tempDir.resolve("app/conf/log4j.properties"), is(not(present())));
     assertThat(tempDir.resolve("app/conf/log4j2.xml"), is(present()));
@@ -230,7 +230,7 @@ public class Log4shellUpdateTest {
 
     assertThat(tempDir.resolve("iFinder5/WEB-INF/lib/log4j-1.2.17.jar.bak_log4shell"), is(present()));
     assertThat(tempDir.resolve("iFinder5/WEB-INF/lib/log4j-1.2.17.jar"), is(not(present())));
-    assertThat(tempDir.resolve("iFinder5/WEB-INF/lib/log4j-1.2-api-2.16.0.jar"), is(present()));
+    assertThat(tempDir.resolve("iFinder5/WEB-INF/lib/log4j-1.2-api-2.17.0.jar"), is(present()));
     assertThat(tempDir.resolve("iFinder5/WEB-INF/classes/log4j.properties.bak_log4shell"), is(present()));
     assertThat(tempDir.resolve("iFinder5/WEB-INF/classes/log4j.properties"), is(not(present())));
     assertThat(tempDir.resolve("iFinder5/WEB-INF/classes/log4j2.xml"), is(present()));

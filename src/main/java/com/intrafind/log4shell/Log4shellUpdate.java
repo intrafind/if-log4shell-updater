@@ -201,7 +201,7 @@ public class Log4shellUpdate {
         System.err.println("Could not determine SLF4J implementation for " + basePath + ". Cannot replace " + path);
         return;
       } else if (slf4jImpls.length == 1) {
-        toReplace.put(basePath.resolve("lib").resolve(slf4jImpls[0]), "log4j-slf4j-impl-2.16.0.jar");
+        toReplace.put(basePath.resolve("lib").resolve(slf4jImpls[0]), "log4j-slf4j-impl-2.17.0.jar");
       }
       if (isIntrafindService(path)) {
         toDelete.add(basePath.resolve("log4j.properties"));
@@ -236,9 +236,9 @@ public class Log4shellUpdate {
         System.err.println("Cannot replace " + path + " as it is not part of a known IntraFind structure.");
       }
       toDelete.add(path);
-      toAdd.put(basePath.resolve("lib/log4j-1.2-api-2.16.0.jar"), "log4j-1.2-api-2.16.0.jar");
-      toAdd.put(basePath.resolve("lib/log4j-api-2.16.0.jar"), "log4j-api-2.16.0.jar");
-      toAdd.put(basePath.resolve("lib/log4j-core-2.16.0.jar"), "log4j-core-2.16.0.jar");
+      toAdd.put(basePath.resolve("lib/log4j-1.2-api-2.17.0.jar"), "log4j-1.2-api-2.17.0.jar");
+      toAdd.put(basePath.resolve("lib/log4j-api-2.17.0.jar"), "log4j-api-2.17.0.jar");
+      toAdd.put(basePath.resolve("lib/log4j-core-2.17.0.jar"), "log4j-core-2.17.0.jar");
     }
   }
 
