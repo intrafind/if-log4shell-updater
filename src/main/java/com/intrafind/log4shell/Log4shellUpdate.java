@@ -29,12 +29,15 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -90,15 +93,16 @@ public class Log4shellUpdate {
     final Path pathOpt = Paths.get(cmd.getOptionValue("path"));
 
     final Map<Path, String> toReplace = new HashMap<>();
-    final List<Path> addedFiles = new ArrayList<>();
-    final List<Path> toDelete = new ArrayList<>();
+    final SortedSet<Path> addedFiles = new TreeSet<>();
+    final SortedSet<Path> toDelete = new TreeSet<>();
     final Map<Path, String> toAdd = new HashMap<>();
     final Map<Path, String> toAppend = new HashMap<>();
     final Map<Path, Map<String, String>> toReplaceInFile = new HashMap<>();
-    final List<Path> fatJars = new ArrayList<>();
+    final SortedSet<Path> fatJars = new TreeSet<>();
+    final SortedSet<Path> failed = new TreeSet<>();
     Files.walk(pathOpt).forEach(path -> Log4shellUpdate.handleIfOldLog4j2(path, toReplace, toDelete, fatJars));
     if (cmd.hasOption("replace-log4j1")) {
-      Files.walk(pathOpt).forEach(path -> Log4shellUpdate.handleIfLog4j1(path, toDelete, toAdd, toAppend, toReplaceInFile, toReplace));
+      Files.walk(pathOpt).forEach(path -> Log4shellUpdate.handleIfLog4j1(path, toDelete, toAdd, toAppend, toReplaceInFile, toReplace, failed));
     }
     if (cmd.hasOption("dry-run")) {
       toReplace.forEach((oldFile, replacement) -> System.out.println("Would replace " + oldFile + " with " + replacement));
@@ -107,6 +111,10 @@ public class Log4shellUpdate {
       toAdd.forEach((file, content) -> System.out.println("Would create " + file));
       toAppend.forEach((file, content) -> System.out.println("Would append to " + file));
       toReplaceInFile.forEach((file, content) -> System.out.println("Would modify " + file));
+      if (!failed.isEmpty()) {
+        System.err.println();
+        failed.forEach(file -> System.err.println("Would not change " + file + ". Please handle it manually."));
+      }
     } else {
       toReplace.forEach((oldFile, replacement) -> Log4shellUpdate.checkFilePermissions(oldFile));
       toDelete.forEach(Log4shellUpdate::checkFilePermissions);
@@ -124,6 +132,10 @@ public class Log4shellUpdate {
       toAdd.forEach((file, content) -> addFile(file, content, backups, addedFiles));
       toAppend.forEach((file, content) -> appendToFile(file, content, backups, addedFiles));
       toReplaceInFile.forEach((file, replacements) -> replaceInFile(file, replacements, backups, addedFiles));
+      if (!failed.isEmpty()) {
+        System.err.println();
+        failed.forEach(file -> System.err.println("Did not change " + file + ". Please handle it manually."));
+      }
       if (cmd.hasOption("delete-backups")) {
         deleteBackups(pathOpt, backups);
       }
@@ -155,7 +167,7 @@ public class Log4shellUpdate {
     }
   }
 
-  private static void handleIfOldLog4j2(Path path, Map<Path, String> toReplace, List<Path> toDelete, List<Path> fatJars) {
+  private static void handleIfOldLog4j2(Path path, Map<Path, String> toReplace, Collection<Path> toDelete, Collection<Path> fatJars) {
     if (!path.toFile().isDirectory()) {
       final String filename = path.getFileName().toString();
       if (DELETE_PATTERN.asPredicate().test(filename)) {
@@ -187,7 +199,7 @@ public class Log4shellUpdate {
     }
   }
 
-  private static void handleIfLog4j1(Path path, List<Path> toDelete, Map<Path, String> toAdd, Map<Path, String> toAppend, Map<Path, Map<String, String>> toReplaceInFile, Map<Path, String> toReplace) {
+  private static void handleIfLog4j1(Path path, Collection<Path> toDelete, Map<Path, String> toAdd, Map<Path, String> toAppend, Map<Path, Map<String, String>> toReplaceInFile, Map<Path, String> toReplace, Collection<Path> failed) {
     if (LOG4J1_PATTERN.asPredicate().test(path.getFileName().toString())) {
       final Path basePath = path.getParent().getParent();
       final Path[] slf4jImpls;
@@ -195,10 +207,12 @@ public class Log4shellUpdate {
         slf4jImpls = Files.list(basePath.resolve("lib")).filter(file -> file.getFileName().toString().matches("slf4j-log4j12-.*\\.jar")).limit(2).toArray(Path[]::new);
       } catch (IOException e) {
         System.err.println("Could not determine SLF4J implementation for " + basePath + ". Cannot replace " + path + " Exception: " + e.getMessage());
+        failed.add(path);
         return;
       }
       if (slf4jImpls.length > 1) {
         System.err.println("Could not determine SLF4J implementation for " + basePath + ". Cannot replace " + path);
+        failed.add(path);
         return;
       } else if (slf4jImpls.length == 1) {
         toReplace.put(basePath.resolve("lib").resolve(slf4jImpls[0]), "log4j-slf4j-impl-2.17.0.jar");
@@ -219,10 +233,12 @@ public class Log4shellUpdate {
               .toArray(Path[]::new);
         } catch (IOException e) {
           System.err.println("Could not determine start script for " + basePath + ". Cannot replace " + path + " Exception: " + e.getMessage());
+          failed.add(path);
           return;
         }
         if (startScripts.length != 1) {
           System.err.println("Could not determine start script for " + basePath + ". Cannot replace " + path);
+          failed.add(path);
           return;
         }
         final Path startScriptPath = basePath.resolve((IS_WINDOWS ? "bat/" : "bin/")).resolve(startScripts[0]);
@@ -231,18 +247,24 @@ public class Log4shellUpdate {
              BufferedReader bufferedReader = new BufferedReader(reader)) {
           if (bufferedReader.lines().noneMatch(line -> line.matches(".*" + LOG4J1_CONFIGURATION + ".*"))) {
             System.err.println("Cannot replace " + path + " as the start script " + startScriptPath + " is not well formatted.");
+            failed.add(path);
             return;
           }
         } catch (FileNotFoundException e) {
           System.err.println("Cannot replace " + path + " as the start script " + startScriptPath + " does not exist.");
+          failed.add(path);
+          return;
         } catch (Exception e) {
           System.err.println("Cannot replace " + path + " due to an error: " + e.getMessage());
+          failed.add(path);
+          return;
         }
         toReplaceInFile.put(startScriptPath, Collections.singletonMap(LOG4J1_CONFIGURATION, LOG4J2_CONFIGURATION));
         toDelete.add(basePath.resolve("conf/log4j.properties"));
         toAdd.put(basePath.resolve("conf/log4j2.xml"), "log4j2.xml");
       } else {
         System.err.println("Cannot replace " + path + " as it is not part of a known IntraFind structure.");
+        failed.add(path);
         return;
       }
       toDelete.add(path);
@@ -253,17 +275,20 @@ public class Log4shellUpdate {
   }
 
   private static boolean isIntrafindService(Path path) {
-    return path.getParent().getParent().resolve("log4j.properties").toFile().exists() &&
+    return path.getParent().endsWith("lib") &&
+        path.getParent().getParent().resolve("log4j.properties").toFile().exists() &&
         path.getParent().getParent().resolve("conf/wrapper.conf").toFile().exists();
   }
 
   private static boolean isIntrafindWebapp(Path path) {
-    return "iFinder5".equals(path.getParent().getParent().getParent().getFileName().toString()) &&
+    return path.getParent().endsWith("lib") &&
+        "iFinder5".equals(path.getParent().getParent().getParent().getFileName().toString()) &&
         path.getParent().getParent().resolve("classes/log4j.properties").toFile().exists();
   }
 
   private static boolean isIntrafindApp(Path path) {
-    return path.getParent().getParent().resolve("conf/log4j.properties").toFile().exists();
+    return path.getParent().endsWith("lib") &&
+        path.getParent().getParent().resolve("conf/log4j.properties").toFile().exists();
   }
 
   private static void checkFilePermissions(Path oldFile) {
@@ -279,7 +304,7 @@ public class Log4shellUpdate {
     }
   }
 
-  private static void replace(Path oldFile, String replacement, List<Path> backups, List<Path> addedFiles) {
+  private static void replace(Path oldFile, String replacement, Collection<Path> backups, Collection<Path> addedFiles) {
     delete(oldFile, backups, addedFiles);
     final Path pathReplacement = oldFile.getParent().resolve(replacement);
     try {
@@ -292,7 +317,7 @@ public class Log4shellUpdate {
     System.out.println("Replaced " + oldFile + " with " + replacement);
   }
 
-  private static Path delete(Path oldFile, List<Path> backups, List<Path> addedFiles) {
+  private static Path delete(Path oldFile, Collection<Path> backups, Collection<Path> addedFiles) {
     try {
       final Path backupPath = Paths.get(oldFile + BACKUP_SUFFIX);
       Files.move(oldFile, backupPath);
@@ -307,7 +332,7 @@ public class Log4shellUpdate {
   }
 
   @SuppressWarnings("ConstantConditions")
-  private static void clean(Path fatJar, List<Path> backups, List<Path> addedFiles, boolean allowDuplicates) {
+  private static void clean(Path fatJar, Collection<Path> backups, Collection<Path> addedFiles, boolean allowDuplicates) {
     final Path backupPath = delete(fatJar, backups, addedFiles);
     try (final InputStream fileInputStream = Files.newInputStream(backupPath);
          final BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
@@ -328,7 +353,7 @@ public class Log4shellUpdate {
     }
   }
 
-  private static void addFile(Path file, String content, List<Path> backups, List<Path> addedFiles) {
+  private static void addFile(Path file, String content, Collection<Path> backups, Collection<Path> addedFiles) {
     try {
       exportResource(content, file);
       addedFiles.add(file);
@@ -338,7 +363,7 @@ public class Log4shellUpdate {
     }
   }
 
-  private static void appendToFile(Path path, String content, List<Path> backups, List<Path> addedFiles) {
+  private static void appendToFile(Path path, String content, Collection<Path> backups, Collection<Path> addedFiles) {
     try (OutputStream outputStream = Files.newOutputStream(path, StandardOpenOption.APPEND);
          Writer writer = new OutputStreamWriter(outputStream);
          BufferedWriter bufferedWriter = new BufferedWriter(writer)) {
@@ -353,7 +378,7 @@ public class Log4shellUpdate {
   }
 
   @SuppressWarnings("ConstantConditions")
-  private static void replaceInFile(Path path, Map<String, String> replacements, List<Path> backups, List<Path> addedFiles) {
+  private static void replaceInFile(Path path, Map<String, String> replacements, Collection<Path> backups, Collection<Path> addedFiles) {
     final Path backupPath = delete(path, backups, addedFiles);
     try (final InputStream inputStream = Files.newInputStream(backupPath);
          final Reader reader = new InputStreamReader(inputStream);
@@ -463,7 +488,7 @@ public class Log4shellUpdate {
     }
   }
 
-  private static void restoreAndExit(List<Path> backups, List<Path> addedFiles) {
+  private static void restoreAndExit(Collection<Path> backups, Collection<Path> addedFiles) {
     for (Path backup : backups) {
       final Path restorePath = Paths.get(backup.toString().replaceAll("(\\Q" + BACKUP_SUFFIX + "\\E)+$", ""));
       try {
