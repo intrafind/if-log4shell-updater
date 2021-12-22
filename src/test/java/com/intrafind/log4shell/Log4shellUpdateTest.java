@@ -208,7 +208,7 @@ public class Log4shellUpdateTest {
   public void testLogj1() throws IOException {
     Log4shellUpdate.main(new String[]{"-p", tempDir.toString(), "-l1"});
 
-    assertThat(tempDir.resolve("service").toFile().list().length, is(equalTo(26)));
+    assertThat(tempDir.resolve("service").toFile().list().length, is(equalTo(27)));
 
     assertThat(tempDir.resolve("service/log4j.properties"), is(not(present())));
     assertThat(tempDir.resolve("service/log4j.properties.bak_log4shell"), is(present()));

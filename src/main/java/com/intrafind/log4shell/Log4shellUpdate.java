@@ -40,6 +40,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipInputStream;
@@ -56,7 +58,9 @@ public class Log4shellUpdate {
   private static final Pattern DELETE_PATTERN = Pattern.compile("elasticsearch-sql-cli-\\d+\\.\\d+\\.\\d+\\.jar");
   private static final Pattern LOG4J1_PATTERN = Pattern.compile("log4j-1.2.\\d+\\.jar");
   private static final Map<String, String> REPLACEMENTS;
-  private static final List<String> VULNERABLE_CLASSES = Arrays.asList("org/apache/logging/log4j/core/lookup/JndiLookup.class");
+  private static final List<String> VULNERABLE_CLASSES_LOG4J2 = Arrays.asList("org/apache/logging/log4j/core/lookup/JndiLookup.class");
+  private static final List<String> VULNERABLE_CLASSES_LOG4J1 = Arrays.asList("org/apache/log4j/net/SocketNode.class");
+  private static final List<String> VULNERABLE_CLASSES = Stream.concat(VULNERABLE_CLASSES_LOG4J1.stream(), VULNERABLE_CLASSES_LOG4J2.stream()).collect(Collectors.toList());
   private static final Field ZIP_NAMES_FIELD;
   private static final String LINE_SEPARATOR = System.lineSeparator();
   static final String LOG4J2_WRAPPER_SETTINGS =
@@ -98,24 +102,22 @@ public class Log4shellUpdate {
     final Map<Path, String> toAdd = new HashMap<>();
     final Map<Path, String> toAppend = new HashMap<>();
     final Map<Path, Map<String, String>> toReplaceInFile = new HashMap<>();
-    final SortedSet<Path> fatJars = new TreeSet<>();
-    final SortedSet<Path> failed = new TreeSet<>();
-    Files.walk(pathOpt).forEach(path -> Log4shellUpdate.handleIfOldLog4j2(path, toReplace, toDelete, fatJars));
+    final SortedSet<Path> toModify = new TreeSet<>();
+    System.out.println("Analyzing files... (this might take a few minutes)");
+    Files.walk(pathOpt).forEach(path -> Log4shellUpdate.handleIfOldLog4j2(path, toReplace, toDelete, toModify));
     if (cmd.hasOption("replace-log4j1")) {
-      Files.walk(pathOpt).forEach(path -> Log4shellUpdate.handleIfLog4j1(path, toDelete, toAdd, toAppend, toReplaceInFile, toReplace, failed));
+      Files.walk(pathOpt).forEach(path -> Log4shellUpdate.handleIfLog4j1(path, toDelete, toAdd, toAppend, toReplaceInFile, toReplace, toModify));
     }
+    System.out.println("Analysis finished!");
     if (cmd.hasOption("dry-run")) {
       toReplace.forEach((oldFile, replacement) -> System.out.println("Would replace " + oldFile + " with " + replacement));
       toDelete.forEach(oldFile -> System.out.println("Would delete " + oldFile));
-      fatJars.forEach(jar -> System.out.println("Would remove vulnerable classes from " + jar));
+      toModify.forEach(jar -> System.out.println("Would remove vulnerable classes from " + jar));
       toAdd.forEach((file, content) -> System.out.println("Would create " + file));
       toAppend.forEach((file, content) -> System.out.println("Would append to " + file));
       toReplaceInFile.forEach((file, content) -> System.out.println("Would modify " + file));
-      if (!failed.isEmpty()) {
-        System.err.println();
-        failed.forEach(file -> System.err.println("Would not change " + file + ". Please handle it manually."));
-      }
     } else {
+      System.out.println("Executing changes:");
       toReplace.forEach((oldFile, replacement) -> Log4shellUpdate.checkFilePermissions(oldFile));
       toDelete.forEach(Log4shellUpdate::checkFilePermissions);
       toAppend.forEach((file, content) -> Log4shellUpdate.checkFilePermissions(file));
@@ -125,21 +127,18 @@ public class Log4shellUpdate {
       toDelete.forEach(oldPath -> Log4shellUpdate.delete(oldPath, backups, addedFiles));
       if (cmd.hasOption("allow-duplicates")) {
         ZIP_NAMES_FIELD.setAccessible(true);
-        fatJars.forEach(fatJar -> Log4shellUpdate.clean(fatJar, backups, addedFiles, true));
+        toModify.forEach(fatJar -> Log4shellUpdate.clean(fatJar, backups, addedFiles, true));
       } else {
-        fatJars.forEach(fatJar -> Log4shellUpdate.clean(fatJar, backups, addedFiles, false));
+        toModify.forEach(fatJar -> Log4shellUpdate.clean(fatJar, backups, addedFiles, false));
       }
       toAdd.forEach((file, content) -> addFile(file, content, backups, addedFiles));
       toAppend.forEach((file, content) -> appendToFile(file, content, backups, addedFiles));
       toReplaceInFile.forEach((file, replacements) -> replaceInFile(file, replacements, backups, addedFiles));
-      if (!failed.isEmpty()) {
-        System.err.println();
-        failed.forEach(file -> System.err.println("Did not change " + file + ". Please handle it manually."));
-      }
       if (cmd.hasOption("delete-backups")) {
         deleteBackups(pathOpt, backups);
       }
     }
+    System.out.println("\nDone!");
   }
 
   private static CommandLine parseCmd(String[] args) {
@@ -187,7 +186,7 @@ public class Log4shellUpdate {
           try {
             try (final InputStream fileInputStream = Files.newInputStream(path);
                  final BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream)) {
-              if (zipContainsLog4j(bufferedInputStream)) {
+              if (zipContainsClass(bufferedInputStream, VULNERABLE_CLASSES_LOG4J2)) {
                 fatJars.add(path);
               }
             }
@@ -199,20 +198,20 @@ public class Log4shellUpdate {
     }
   }
 
-  private static void handleIfLog4j1(Path path, Collection<Path> toDelete, Map<Path, String> toAdd, Map<Path, String> toAppend, Map<Path, Map<String, String>> toReplaceInFile, Map<Path, String> toReplace, Collection<Path> failed) {
+  private static void handleIfLog4j1(Path path, Collection<Path> toDelete, Map<Path, String> toAdd, Map<Path, String> toAppend, Map<Path, Map<String, String>> toReplaceInFile, Map<Path, String> toReplace, Collection<Path> modify) {
     if (LOG4J1_PATTERN.asPredicate().test(path.getFileName().toString())) {
       final Path basePath = path.getParent().getParent();
       final Path[] slf4jImpls;
       try {
         slf4jImpls = Files.list(basePath.resolve("lib")).filter(file -> file.getFileName().toString().matches("slf4j-log4j12-.*\\.jar")).limit(2).toArray(Path[]::new);
       } catch (IOException e) {
-        System.err.println("Could not determine SLF4J implementation for " + basePath + ". Cannot replace " + path + " Exception: " + e.getMessage());
-        failed.add(path);
+        System.err.println("Could not determine SLF4J implementation for " + basePath + ". Cannot replace " + path + " Exception: " + e.getMessage() + ". Will delete vulnerable SocketNode class.");
+        modify.add(path);
         return;
       }
       if (slf4jImpls.length > 1) {
-        System.err.println("Could not determine SLF4J implementation for " + basePath + ". Cannot replace " + path);
-        failed.add(path);
+        System.err.println("Could not determine SLF4J implementation for " + basePath + ". Cannot replace " + path + ". Will delete vulnerable SocketNode class.");
+        modify.add(path);
         return;
       } else if (slf4jImpls.length == 1) {
         toReplace.put(basePath.resolve("lib").resolve(slf4jImpls[0]), "log4j-slf4j-impl-2.17.0.jar");
@@ -232,13 +231,13 @@ public class Log4shellUpdate {
               .limit(2)
               .toArray(Path[]::new);
         } catch (IOException e) {
-          System.err.println("Could not determine start script for " + basePath + ". Cannot replace " + path + " Exception: " + e.getMessage());
-          failed.add(path);
+          System.err.println("Could not determine start script for " + basePath + ". Cannot replace " + path + " Exception: " + e.getMessage() + ". Will delete vulnerable SocketNode class.");
+          modify.add(path);
           return;
         }
         if (startScripts.length != 1) {
-          System.err.println("Could not determine start script for " + basePath + ". Cannot replace " + path);
-          failed.add(path);
+          System.err.println("Could not determine start script for " + basePath + ". Cannot replace " + path + ". Will delete vulnerable SocketNode class.");
+          modify.add(path);
           return;
         }
         final Path startScriptPath = basePath.resolve((IS_WINDOWS ? "bat/" : "bin/")).resolve(startScripts[0]);
@@ -246,25 +245,25 @@ public class Log4shellUpdate {
              InputStreamReader reader = new InputStreamReader(startScript);
              BufferedReader bufferedReader = new BufferedReader(reader)) {
           if (bufferedReader.lines().noneMatch(line -> line.matches(".*" + LOG4J1_CONFIGURATION + ".*"))) {
-            System.err.println("Cannot replace " + path + " as the start script " + startScriptPath + " is not well formatted.");
-            failed.add(path);
+            System.err.println("Cannot replace " + path + " as the start script " + startScriptPath + " is not well formatted. Will delete vulnerable SocketNode class.");
+            modify.add(path);
             return;
           }
         } catch (FileNotFoundException e) {
-          System.err.println("Cannot replace " + path + " as the start script " + startScriptPath + " does not exist.");
-          failed.add(path);
+          System.err.println("Cannot replace " + path + " as the start script " + startScriptPath + " does not exist. Will delete vulnerable SocketNode class.");
+          modify.add(path);
           return;
         } catch (Exception e) {
-          System.err.println("Cannot replace " + path + " due to an error: " + e.getMessage());
-          failed.add(path);
+          System.err.println("Cannot replace " + path + " due to an error: " + e.getMessage() + ". Will delete vulnerable SocketNode class.");
+          modify.add(path);
           return;
         }
         toReplaceInFile.put(startScriptPath, Collections.singletonMap(LOG4J1_CONFIGURATION, LOG4J2_CONFIGURATION));
         toDelete.add(basePath.resolve("conf/log4j.properties"));
         toAdd.put(basePath.resolve("conf/log4j2.xml"), "log4j2.xml");
       } else {
-        System.err.println("Cannot replace " + path + " as it is not part of a known IntraFind structure.");
-        failed.add(path);
+        System.err.println("Cannot replace " + path + " as it is not part of a known IntraFind structure. Will delete vulnerable SocketNode class.");
+        modify.add(path);
         return;
       }
       toDelete.add(path);
@@ -332,22 +331,23 @@ public class Log4shellUpdate {
   }
 
   @SuppressWarnings("ConstantConditions")
-  private static void clean(Path fatJar, Collection<Path> backups, Collection<Path> addedFiles, boolean allowDuplicates) {
-    final Path backupPath = delete(fatJar, backups, addedFiles);
+  private static void clean(Path jar, Collection<Path> backups, Collection<Path> addedFiles, boolean allowDuplicates) {
+    final Path backupPath = delete(jar, backups, addedFiles);
     try (final InputStream fileInputStream = Files.newInputStream(backupPath);
          final BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
-         final OutputStream fileOutputStream = Files.newOutputStream(fatJar);
+         final OutputStream fileOutputStream = Files.newOutputStream(jar);
          final BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream)) {
-      copyZipWithoutVulnerableClasses(bufferedInputStream, bufferedOutputStream, allowDuplicates);
+      copyZipWithoutVulnerableClasses(bufferedInputStream, bufferedOutputStream, VULNERABLE_CLASSES, allowDuplicates);
+      System.out.println("Removed vulnerable classes from " + jar);
     } catch (Exception e) {
-      System.err.println("Could not remove vulnerable classes from " + fatJar + ". Restoring changes...");
+      System.err.println("Could not remove vulnerable classes from " + jar + ". Restoring changes...");
       if (e instanceof ZipException && e.getMessage().contains("duplicate entry:")) {
         System.err.println("Please try again with the 'allow-duplicates' option activated. This might cause warnings about illegal reflection occurring. Those may be ignored.");
       }
       try {
-        Files.delete(fatJar);
+        Files.delete(jar);
       } catch (IOException ex) {
-        System.err.println("Failed to delete incomplete " + fatJar);
+        System.err.println("Failed to delete incomplete " + jar);
       }
       restoreAndExit(backups, addedFiles);
     }
@@ -357,6 +357,7 @@ public class Log4shellUpdate {
     try {
       exportResource(content, file);
       addedFiles.add(file);
+      System.out.println("Added " + file);
     } catch (IOException e) {
       System.err.println("Could not write to " + file + ". Exception: " + e.getMessage() + " Restoring changes...");
       restoreAndExit(backups, addedFiles);
@@ -371,6 +372,7 @@ public class Log4shellUpdate {
       Files.copy(path, backupPath);
       backups.add(backupPath);
       bufferedWriter.write(content);
+      System.out.println("Modified " + path);
     } catch (IOException e) {
       System.err.println("Could not write to " + path + ". Exception: " + e.getMessage() + " Restoring changes...");
       restoreAndExit(backups, addedFiles);
@@ -396,6 +398,7 @@ public class Log4shellUpdate {
               throw new UncheckedIOException(e);
             }
           });
+      System.out.println("Modified " + path);
     } catch (Exception e) {
       System.err.println("Could not modify file " + path + ". Exception: " + e.getMessage() + " Restoring changes...");
       restoreAndExit(backups, addedFiles);
@@ -410,14 +413,14 @@ public class Log4shellUpdate {
     return resultingText;
   }
 
-  private static boolean zipContainsLog4j(InputStream inputStream) throws IOException {
+  private static boolean zipContainsClass(InputStream inputStream, Collection<String> classes) throws IOException {
     final ZipInputStream zipInputStream = new ZipInputStream(inputStream);
     for (ZipEntry entry = zipInputStream.getNextEntry(); entry != null; entry = zipInputStream.getNextEntry()) {
-      if (VULNERABLE_CLASSES.contains(entry.getName())) {
+      if (classes.contains(entry.getName())) {
         return true;
       }
       if (entry.getName().endsWith(".jar")) {
-        if (zipContainsLog4j(zipInputStream)) {
+        if (zipContainsClass(zipInputStream, classes)) {
           return true;
         }
       }
@@ -452,11 +455,11 @@ public class Log4shellUpdate {
   }
 
   @SuppressWarnings({"unchecked", "ConstantConditions"})
-  private static void copyZipWithoutVulnerableClasses(InputStream inputStream, OutputStream outputStream, boolean allowDuplicates) throws IOException, IllegalAccessException {
+  private static void copyZipWithoutVulnerableClasses(InputStream inputStream, OutputStream outputStream, Collection<String> classes, boolean allowDuplicates) throws IOException, IllegalAccessException {
     final ZipInputStream zipInputStream = new ZipInputStream(inputStream);
     final ZipOutputStream zipOutputStream = new ZipOutputStream((outputStream));
     for (ZipEntry entry = zipInputStream.getNextEntry(); entry != null; entry = zipInputStream.getNextEntry()) {
-      if (VULNERABLE_CLASSES.contains(entry.getName())) {
+      if (classes.contains(entry.getName())) {
         continue;
       }
       if (allowDuplicates) {
@@ -471,7 +474,7 @@ public class Log4shellUpdate {
       Optional.ofNullable(entry.getTime()).ifPresent(newEntry::setTime);
       zipOutputStream.putNextEntry(newEntry);
       if (entry.getName().endsWith(".jar")) {
-        copyZipWithoutVulnerableClasses(zipInputStream, zipOutputStream, allowDuplicates);
+        copyZipWithoutVulnerableClasses(zipInputStream, zipOutputStream, classes, allowDuplicates);
       } else {
         copyStream(zipInputStream, zipOutputStream);
       }
