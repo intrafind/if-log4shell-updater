@@ -45,12 +45,12 @@ public class Log4shellUpdate {
 
   static {
     REPLACEMENTS = new HashMap<>();
-    REPLACEMENTS.put("log4j-1.2-api-", "log4j-1.2-api-2.17.0.jar");
-    REPLACEMENTS.put("log4j-api-", "log4j-api-2.17.0.jar");
-    REPLACEMENTS.put("log4j-core-", "log4j-core-2.17.0.jar");
-    REPLACEMENTS.put("log4j-jcl-", "log4j-jcl-2.17.0.jar");
-    REPLACEMENTS.put("log4j-layout-template-json-", "log4j-layout-template-json-2.17.0.jar");
-    REPLACEMENTS.put("log4j-slf4j-impl-", "log4j-slf4j-impl-2.17.0.jar");
+    REPLACEMENTS.put("log4j-1.2-api-", "log4j-1.2-api-2.17.1.jar");
+    REPLACEMENTS.put("log4j-api-", "log4j-api-2.17.1.jar");
+    REPLACEMENTS.put("log4j-core-", "log4j-core-2.17.1.jar");
+    REPLACEMENTS.put("log4j-jcl-", "log4j-jcl-2.17.1.jar");
+    REPLACEMENTS.put("log4j-layout-template-json-", "log4j-layout-template-json-2.17.1.jar");
+    REPLACEMENTS.put("log4j-slf4j-impl-", "log4j-slf4j-impl-2.17.1.jar");
 
     try {
       ZIP_NAMES_FIELD = ZipOutputStream.class.getDeclaredField("names");
