@@ -92,7 +92,7 @@ public class Log4shellUpdateTest {
     final Path serviceSubNewer = Files.createDirectory(service.resolve("subNewer"));
     Files.createFile(serviceSubNewer.resolve("log4j-core-2.30.0.jar"));
     final Path sub17 = Files.createDirectory(service.resolve("sub17"));
-    Files.createFile(sub17.resolve("log4j-core-2.17.1.jar"));
+    Files.createFile(sub17.resolve("log4j-core-2.17.0.jar"));
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -112,7 +112,8 @@ public class Log4shellUpdateTest {
     assertThat(tempDir.resolve("service/subNew/log4j-core-2.17.1.jar"), not(exists()));
     assertThat(tempDir.resolve("service/subNewer/log4j-core-2.30.0.jar"), exists());
     assertThat(tempDir.resolve("service/subNewer/log4j-core-2.17.1.jar"), not(exists()));
-    assertThat(tempDir.resolve("service/sub17/log4j-core-2.17.1.jar"), exists());
+    assertThat(tempDir.resolve("service/sub17/log4j-core-2.17.0.jar"), exists());
+    assertThat(tempDir.resolve("service/sub17/log4j-core-2.17.1.jar"), not(exists()));
 
     final String output = systemOut.toString();
     assertThat(output, containsString("deep-fat-jar.jar"));
@@ -138,6 +139,7 @@ public class Log4shellUpdateTest {
     assertThat(tempDir.resolve("service/subNew/log4j-core-2.17.1.jar"), exists());
     assertThat(tempDir.resolve("service/subNewer/log4j-core-2.30.0.jar"), exists());
     assertThat(tempDir.resolve("service/subNewer/log4j-core-2.17.1.jar"), not(exists()));
+    assertThat(tempDir.resolve("service/sub17/log4j-core-2.17.0.jar"), not(exists()));
     assertThat(tempDir.resolve("service/sub17/log4j-core-2.17.1.jar"), exists());
 
     try (final ZipFile deepFatJar = new ZipFile(tempDir.resolve("service/deep-fat-jar.jar").toString());

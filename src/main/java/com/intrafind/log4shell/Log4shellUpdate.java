@@ -37,7 +37,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
 public class Log4shellUpdate {
 
-  private static final Pattern VERSION_PATTERN = Pattern.compile("-2\\.(\\d+)\\.\\d+\\.jar(\\.bak_log4shell)*");
+  private static final Pattern VERSION_PATTERN = Pattern.compile("-2\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\.jar(\\.bak_log4shell)*");
   private static final Pattern DELETE_PATTERN = Pattern.compile("elasticsearch-sql-cli-\\d+\\.\\d+\\.\\d+\\.jar");
   private static final Map<String, String> REPLACEMENTS;
   private static final List<String> VULNERABLE_CLASSES = Arrays.asList("org/apache/logging/log4j/core/lookup/JndiLookup.class");
@@ -122,7 +122,9 @@ public class Log4shellUpdate {
       } else {
         final Matcher matcher = VERSION_PATTERN.matcher(filename);
         if (matcher.find()) {
-          if (Integer.parseInt(matcher.group(1)) < 17) {
+          final int minorVersion = Integer.parseInt(matcher.group("minor"));
+          final int patchVersion = Integer.parseInt(matcher.group("patch"));
+          if (minorVersion < 17 || (minorVersion == 17 && patchVersion < 1)) {
             REPLACEMENTS.entrySet().stream()
                 .filter(entry -> filename.startsWith(entry.getKey()))
                 .map(Map.Entry::getValue)
