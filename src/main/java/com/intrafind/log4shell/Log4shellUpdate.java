@@ -96,7 +96,7 @@ public class Log4shellUpdate {
     options.addOption("d", "dry-run", false, "only print replacements, do not replace files");
     options.addOption("h", "help", false, "print this help");
     options.addOption("b", "delete-backups", false, "delete backups automatically");
-    options.addOption("a", "allow-duplicates", false, "allow duplicate entries in zip files (will use reflection)");
+    options.addOption("a", "allow-duplicates", false, "allow duplicate entries in zip files\n----\nwill use reflection\nyou might need to add\n--add-opens java.base/java.util.zip=ALL-UNNAMED");
     CommandLineParser parser = new DefaultParser();
 
     try {
