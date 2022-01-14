@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration monitorInterval="30">
+  <Properties>
+    <Property name="pattern_human_stacktrace">%d {%-15.15t} [%-5p] &lt;%-15c{1.}&gt; %m%n%rThrowable{full}</Property>
+    <Property name="file_location">logs</Property>
+    <Property name="filename_human">app</Property>
+    <Property name="max_file_size">250 MB</Property>
+    <Property name="max_files_per_day">8</Property>
+    <Property name="days_to_archive">30</Property>
+  </Properties>
+
+  <Appenders>
+    <Console name="STDOUT" target="SYSTEM_OUT">
+      <PatternLayout pattern="${pattern_human_stacktrace}"/>
+    </Console>
+    <RollingFile name="FILE_HUMAN" fileName="${file_location}/${filename_human}.log" filePattern="${file_location}/${filename_human}-%d{yyyy-MM-dd}_%i.log">
+      <PatternLayout pattern="${pattern_human_stacktrace}"/>
+      <Policies>
+        <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+        <SizeBasedTriggeringPolicy size="${max_file_size}"/>
+      </Policies>
+      <DefaultRolloverStrategy max="${max_files_per_day}">
+        <Delete basePath="${file_location}" maxDepth="2">
+          <IfFileName glob="${filename_human}-*.log" />
+          <IfLastModified age="${days_to_archive}d" />
+        </Delete>
+      </DefaultRolloverStrategy>
+    </RollingFile>
+  </Appenders>
+
+  <Loggers>
+    <Root level="warn">
+      <AppenderRef ref="STDOUT"/>
+      <AppenderRef ref="FILE_HUMAN"/>
+    </Root>
+    <Logger name="com.intrafind" level="info" additivity="false">
+      <AppenderRef ref="STDOUT"/>
+      <AppenderRef ref="FILE_HUMAN"/>
+    </Logger>
+  </Loggers>
+</Configuration>

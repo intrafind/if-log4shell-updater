@@ -1,5 +1,8 @@
 = Changelog
 
+== 2.0.0
+* add capability to update from log4j 1.2 to log4j 2
+
 == 1.4.2
 * also replace log4j 2.17.0
 
