@@ -206,7 +206,7 @@ public class Log4shellUpdateTest {
 
   @SuppressWarnings("ConstantConditions")
   @Test
-  public void testLogj1() throws IOException {
+  public void testLog4j1Windows() throws IOException {
     Log4shellUpdate.main(new String[]{"-p", tempDir.toString(), "-l1"});
 
     assertThat(tempDir.resolve("service").toFile().list().length, is(equalTo(27)));
@@ -218,6 +218,7 @@ public class Log4shellUpdateTest {
     assertThat(tempDir.resolve("service/lib/log4j-1.2.17.jar"), is(not(present())));
     assertThat(tempDir.resolve("service/lib/log4j-1.2-api-2.17.1.jar"), is(present()));
     assertThat(tempDir.resolve("service/lib/log4j-1.2.17.jar.bak_log4shell"), is(present()));
+    assertThat(tempDir.resolve("service/conf/wrapper.conf.bak_log4shell"), is(present()));
     assertThat(Files.lines(tempDir.resolve("service/conf/wrapper.conf")).collect(Collectors.joining(System.lineSeparator())) + System.lineSeparator(), containsString(LOG4J2_WRAPPER_SETTINGS));
 
     assertThat(tempDir.resolve("app/lib/log4j-1.2.17.jar.bak_log4shell"), is(present()));
@@ -229,7 +230,49 @@ public class Log4shellUpdateTest {
     assertThat(tempDir.resolve("app/conf/log4j.properties.bak_log4shell"), is(present()));
     assertThat(tempDir.resolve("app/conf/log4j.properties"), is(not(present())));
     assertThat(tempDir.resolve("app/conf/log4j2.xml"), is(present()));
+    assertThat(tempDir.resolve("app/bat/start_app.bat.bak_log4shell"), is(present()));
     assertThat(Files.lines(tempDir.resolve("app/bat/start_app.bat")).collect(Collectors.joining(System.lineSeparator())), containsString(LOG4J2_CONFIGURATION));
+
+    assertThat(tempDir.resolve("iFinder5/WEB-INF/lib/log4j-1.2.17.jar.bak_log4shell"), is(present()));
+    assertThat(tempDir.resolve("iFinder5/WEB-INF/lib/log4j-1.2.17.jar"), is(not(present())));
+    assertThat(tempDir.resolve("iFinder5/WEB-INF/lib/log4j-1.2-api-2.17.1.jar"), is(present()));
+    assertThat(tempDir.resolve("iFinder5/WEB-INF/classes/log4j.properties.bak_log4shell"), is(present()));
+    assertThat(tempDir.resolve("iFinder5/WEB-INF/classes/log4j.properties"), is(not(present())));
+    assertThat(tempDir.resolve("iFinder5/WEB-INF/classes/log4j2.xml"), is(present()));
+  }
+
+  @SuppressWarnings("ConstantConditions")
+  @Test
+  public void testLog4j1Linux() throws IOException {
+    Log4shellUpdate.IS_WINDOWS = false;
+    final Path appBin = Files.createDirectory(tempDir.resolve("app/bin"));
+    final Path appStartBin = appBin.resolve("start-app.sh");
+    Files.write(appStartBin, Collections.singleton("java -Dlog4j.configuration=../conf/log4j.properties -cp xxx Main"));
+    Log4shellUpdate.main(new String[]{"-p", tempDir.toString(), "-l1"});
+
+    assertThat(tempDir.resolve("service").toFile().list().length, is(equalTo(27)));
+
+    assertThat(tempDir.resolve("service/log4j.properties"), is(not(present())));
+    assertThat(tempDir.resolve("service/log4j.properties.bak_log4shell"), is(present()));
+    assertThat(tempDir.resolve("service/log4j2.xml"), is(present()));
+    assertThat(tempDir.resolve("service/lib/log4j-1.2.17.jar.bak_log4shell"), is(present()));
+    assertThat(tempDir.resolve("service/lib/log4j-1.2.17.jar"), is(not(present())));
+    assertThat(tempDir.resolve("service/lib/log4j-1.2-api-2.17.1.jar"), is(present()));
+    assertThat(tempDir.resolve("service/lib/log4j-1.2.17.jar.bak_log4shell"), is(present()));
+    assertThat(tempDir.resolve("service/conf/wrapper.conf.bak_log4shell"), is(present()));
+    assertThat(Files.lines(tempDir.resolve("service/conf/wrapper.conf")).collect(Collectors.joining(System.lineSeparator())) + System.lineSeparator(), containsString(LOG4J2_WRAPPER_SETTINGS));
+
+    assertThat(tempDir.resolve("app/lib/log4j-1.2.17.jar.bak_log4shell"), is(present()));
+    assertThat(tempDir.resolve("app/lib/log4j-1.2.17.jar"), is(not(present())));
+    assertThat(tempDir.resolve("app/lib/slf4j-log4j12-1.7.0.jar.bak_log4shell"), is(present()));
+    assertThat(tempDir.resolve("app/lib/slf4j-log4j12-1.7.0.jar"), is(not(present())));
+    assertThat(tempDir.resolve("app/lib/log4j-1.2-api-2.17.1.jar"), is(present()));
+    assertThat(tempDir.resolve("app/lib/log4j-slf4j-impl-2.17.1.jar"), is(present()));
+    assertThat(tempDir.resolve("app/conf/log4j.properties.bak_log4shell"), is(present()));
+    assertThat(tempDir.resolve("app/conf/log4j.properties"), is(not(present())));
+    assertThat(tempDir.resolve("app/conf/log4j2.xml"), is(present()));
+    assertThat(tempDir.resolve("app/bin/start-app.sh.bak_log4shell"), is(present()));
+    assertThat(Files.lines(tempDir.resolve("app/bin/start-app.sh")).collect(Collectors.joining(System.lineSeparator())), containsString(LOG4J2_CONFIGURATION));
 
     assertThat(tempDir.resolve("iFinder5/WEB-INF/lib/log4j-1.2.17.jar.bak_log4shell"), is(present()));
     assertThat(tempDir.resolve("iFinder5/WEB-INF/lib/log4j-1.2.17.jar"), is(not(present())));
